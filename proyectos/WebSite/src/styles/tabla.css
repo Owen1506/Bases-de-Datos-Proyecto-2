@@ -1,0 +1,152 @@
+/* Tabla de resultados, badges de categoria y paginacion */
+
+.panel-resultados {
+  padding: 0;
+  overflow: hidden;
+}
+
+.panel-resultados .mensaje {
+  margin: clamp(12px, 1.1vw, 18px);
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: clamp(13px, 0.95vw, 15px);
+}
+
+.tabla th {
+  background-color: #f8fafc;
+  color: #555;
+  text-align: left;
+  font-weight: 600;
+  padding: clamp(8px, 0.8vw, 12px) clamp(12px, 1.1vw, 18px);
+  border-bottom: 1px solid var(--gris-borde);
+}
+
+.tabla td {
+  padding: clamp(8px, 0.8vw, 12px) clamp(12px, 1.1vw, 18px);
+  border-bottom: 1px solid #eef1f5;
+}
+
+.tabla tbody tr {
+  cursor: pointer;
+}
+
+/* Columnas con numeros: alineadas a la derecha para comparar cantidades */
+.tabla .numero {
+  text-align: right;
+}
+
+/* Tabla de solo lectura (lineas de una factura): las filas no se seleccionan */
+.tabla-simple tbody tr {
+  cursor: default;
+}
+
+.tabla-simple tbody tr:hover {
+  background-color: transparent;
+}
+
+/* Las lineas de la factura pueden ser muchas: se desplazan dentro de su recuadro */
+.tabla-contenedor-lineas {
+  border: 1px solid var(--gris-borde);
+  border-radius: 6px;
+  overflow-x: auto;
+  margin-top: clamp(4px, 0.5vw, 8px);
+}
+
+.total-factura {
+  text-align: right;
+  font-size: clamp(14px, 1.1vw, 17px);
+  margin: clamp(8px, 0.8vw, 12px) 0 0 0;
+}
+
+.tabla tbody tr:hover {
+  background-color: var(--azul-claro);
+}
+
+/* Botones de editar y eliminar: ocultos hasta pasar el mouse por la fila */
+.tabla .acciones {
+  width: clamp(80px, 7vw, 110px);
+  text-align: right;
+  white-space: nowrap;
+  visibility: hidden;
+}
+
+.tabla tbody tr:hover .acciones {
+  visibility: visible;
+}
+
+/* ---------- Etiqueta de categoria ---------- */
+
+/* Mismo estilo neutro para todas las categorias: se distinguen por el texto */
+.badge {
+  display: inline-block;
+  padding: clamp(2px, 0.3vw, 4px) clamp(8px, 0.8vw, 12px);
+  border: 1px solid var(--gris-borde);
+  border-radius: 12px;
+  background-color: white;
+  color: #444;
+  font-size: clamp(11px, 0.75vw, 12px);
+  font-weight: 600;
+}
+
+/* ---------- Paginacion ---------- */
+
+.paginacion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: clamp(8px, 0.8vw, 12px);
+  padding: clamp(8px, 0.8vw, 12px) clamp(12px, 1.1vw, 18px);
+}
+
+.paginacion-texto {
+  font-size: clamp(12px, 0.85vw, 13px);
+  color: #666;
+}
+
+.paginacion-botones {
+  display: flex;
+  gap: clamp(2px, 0.3vw, 4px);
+  flex-wrap: wrap;
+}
+
+.paginacion-botones button {
+  min-width: clamp(30px, 2.4vw, 38px);
+  padding: clamp(4px, 0.5vw, 8px) clamp(8px, 0.8vw, 12px);
+  border: 1px solid var(--gris-borde);
+  border-radius: 6px;
+  background-color: white;
+  color: var(--texto);
+  font-size: clamp(12px, 0.85vw, 13px);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.paginacion-botones button:hover:not(:disabled) {
+  background-color: var(--azul-claro);
+}
+
+.paginacion-botones button.actual {
+  background-color: var(--azul);
+  border-color: var(--azul);
+  color: white;
+}
+
+.paginacion-botones button:disabled {
+  color: #aaa;
+  cursor: default;
+}
+
+@media (max-width: 800px) {
+  .paginacion {
+    flex-direction: column;
+  }
+
+  /* en pantallas tactiles no hay hover, asi que los botones se ven siempre */
+  .tabla .acciones {
+    visibility: visible;
+  }
+}

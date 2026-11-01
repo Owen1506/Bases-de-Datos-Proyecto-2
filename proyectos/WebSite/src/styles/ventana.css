@@ -1,0 +1,206 @@
+/* Ventanas emergentes (detalle y formularios) */
+
+.fondo-ventana {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: clamp(12px, 1.1vw, 18px);
+}
+
+.ventana {
+  background-color: white;
+  border-radius: 10px;
+  width: 100%;
+  max-width: clamp(320px, 55vw, 760px);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Ventana mas ancha para el detalle en dos columnas */
+.ventana-ancha {
+  max-width: clamp(320px, 80vw, 1200px);
+}
+
+/* Encabezado de la ventana con una linea de color abajo */
+.ventana-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: clamp(12px, 1.1vw, 18px) clamp(16px, 1.6vw, 26px) clamp(8px, 0.8vw, 12px) clamp(16px, 1.6vw, 26px);
+  border-bottom: 3px solid var(--naranja);
+}
+
+.ventana-titulo h3 {
+  margin: 0;
+  font-size: clamp(17px, 1.4vw, 22px);
+  color: var(--azul);
+}
+
+.ventana-subtitulo {
+  font-size: clamp(13px, 0.95vw, 15px);
+  color: #777;
+}
+
+/* Nombre y badge de la categoria en la misma linea */
+.titulo-con-badge {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 0.8vw, 12px);
+  flex-wrap: wrap;
+}
+
+.boton-cerrar {
+  background: none;
+  border: none;
+  font-size: clamp(17px, 1.4vw, 22px);
+  cursor: pointer;
+  color: #777;
+}
+
+.boton-cerrar:hover {
+  color: var(--texto);
+}
+
+.ventana-contenido {
+  padding: clamp(4px, 0.5vw, 8px) clamp(16px, 1.6vw, 26px) clamp(16px, 1.6vw, 26px) clamp(16px, 1.6vw, 26px);
+  overflow-y: auto;
+}
+
+.ventana-contenido .mensaje {
+  margin-top: clamp(8px, 0.8vw, 12px);
+}
+
+/* Titulo de cada seccion */
+.ventana-contenido h4 {
+  color: var(--azul);
+  font-size: clamp(11px, 0.75vw, 12px);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: clamp(16px, 1.6vw, 26px) 0 clamp(2px, 0.3vw, 4px) 0;
+}
+
+/* ---------- Datos del detalle ---------- */
+
+/* Cada dato es una fila: etiqueta a la izquierda, valor a la derecha */
+.dato {
+  display: grid;
+  grid-template-columns: clamp(120px, 12vw, 200px) 1fr;
+  gap: clamp(8px, 0.8vw, 12px);
+  padding: clamp(4px, 0.5vw, 8px) 0;
+  border-bottom: 1px solid #eef1f5;
+  font-size: clamp(13px, 0.95vw, 15px);
+}
+
+.dato-etiqueta {
+  color: #777;
+}
+
+.dato-valor {
+  word-break: break-word;
+}
+
+/* Linea secundaria debajo de un valor (telefono, ciudad, etc.) */
+.dato-extra {
+  display: block;
+  font-size: clamp(12px, 0.85vw, 13px);
+  color: #777;
+  margin-top: clamp(2px, 0.3vw, 4px);
+}
+
+/* ---------- Detalle en dos columnas ---------- */
+
+/* Izquierda: informacion y contactos. Derecha: direcciones y mapa.
+   La linea vertical entre columnas las separa sin recargar la ventana */
+.detalle-dos-columnas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 clamp(16px, 1.6vw, 26px);
+}
+
+.detalle-dos-columnas > div:last-child {
+  border-left: 1px solid #eef1f5;
+  padding-left: clamp(16px, 1.6vw, 26px);
+}
+
+/* en columnas angostas la etiqueta ocupa menos espacio */
+.detalle-dos-columnas .dato {
+  grid-template-columns: clamp(110px, 10vw, 170px) 1fr;
+}
+
+/* Bloques de direccion lado a lado */
+.bloques-direccion {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(8px, 0.8vw, 12px);
+  margin-top: clamp(4px, 0.5vw, 8px);
+}
+
+.bloque-direccion {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(4px, 0.5vw, 8px);
+  background-color: #f8fafc;
+  border: 1px solid #eef1f5;
+  border-radius: 8px;
+  padding: clamp(8px, 0.8vw, 12px) clamp(12px, 1.1vw, 18px);
+  font-size: clamp(13px, 0.95vw, 15px);
+}
+
+/* "Entrega" o "Postal" arriba del recuadro */
+.bloque-direccion-titulo {
+  font-weight: 600;
+  color: var(--azul);
+}
+
+/* Cada linea de la direccion: la etiqueta pequeña arriba y el valor abajo */
+.fila-direccion {
+  display: flex;
+  flex-direction: column;
+}
+
+.fila-direccion .dato-etiqueta {
+  font-size: clamp(11px, 0.75vw, 12px);
+}
+
+/* Mapa rectangular: ocupa todo el ancho y su alto es proporcional (16 de ancho por 9 de alto) */
+.mapa {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--gris-borde);
+  border-radius: 6px;
+  margin-top: clamp(4px, 0.5vw, 8px);
+}
+
+@media (max-width: 800px) {
+  /* el detalle pasa a una sola columna */
+  .detalle-dos-columnas {
+    grid-template-columns: 1fr;
+  }
+
+  .detalle-dos-columnas > div:last-child {
+    border-left: none;
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  /* la etiqueta va arriba del valor y las direcciones una debajo de otra */
+  .dato,
+  .detalle-dos-columnas .dato {
+    grid-template-columns: 1fr;
+    gap: clamp(2px, 0.3vw, 4px);
+  }
+
+  .bloques-direccion {
+    grid-template-columns: 1fr;
+  }
+}

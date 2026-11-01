@@ -1,0 +1,17 @@
+{
+  "name": "api-wwi",
+  "version": "1.0.0",
+  "description": "API del Proyecto 1 de Bases de Datos 2 (WideWorldImporters)",
+  "main": "src/index.js",
+  "private": true,
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch-path=src src/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.5",
+    "express": "^5.2.1",
+    "mssql": "^12.7.2"
+  }
+}

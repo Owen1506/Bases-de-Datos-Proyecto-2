@@ -1,0 +1,60 @@
+.catalogo-reportes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: clamp(12px, 1.1vw, 18px);
+}
+
+.reporte-tarjeta {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: flex-start;
+  column-gap: 14px;
+  row-gap: 10px;
+  min-height: 120px;
+  text-align: left;
+  font: inherit;
+  color: var(--texto);
+}
+
+.reporte-tarjeta.disponible { cursor: pointer; }
+.reporte-tarjeta.disponible:hover,
+.reporte-tarjeta.disponible:focus-visible {
+  border-color: var(--azul);
+  box-shadow: 0 2px 8px rgba(31, 78, 121, 0.15);
+}
+.reporte-tarjeta:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; }
+.reporte-tarjeta.pendiente { background: #fafbfc; }
+
+.reporte-numero {
+  flex: none;
+  color: var(--azul);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+.reporte-tarjeta.pendiente .reporte-numero { color: #8a949e; }
+.reporte-tarjeta-texto { display: flex; min-width: 0; flex-direction: column; gap: 6px; }
+.reporte-tarjeta-texto strong { color: var(--azul); font-size: 15px; }
+.reporte-tarjeta-texto > span { color: #666; font-size: 13px; line-height: 1.4; }
+.reporte-tarjeta.pendiente .reporte-tarjeta-texto strong { color: #555; }
+.reporte-estado { grid-column: 2; color: var(--azul); font-size: 12px; font-weight: 600; }
+.reporte-tarjeta.pendiente .reporte-estado { color: #777; }
+
+.reporte-navegacion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  color: #666;
+  font-size: 13px;
+}
+
+.reporte-tabla-contenedor { overflow-x: auto; }
+.reporte-tabla { min-width: 650px; }
+.reporte-tabla tbody tr { cursor: default; }
+.reporte-tabla .monto { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.reporte-tabla .subtotal { background: #eef4fa; font-weight: 600; }
+.reporte-tabla .total-general { background: #dceaf7; font-weight: 700; }
+.reporte-tabla .subtotal:hover { background: #e4eff9; }
+.reporte-tabla .total-general:hover { background: #d2e4f5; }

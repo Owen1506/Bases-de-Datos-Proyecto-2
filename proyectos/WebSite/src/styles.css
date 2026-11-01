@@ -1,0 +1,12 @@
+/* Estilos del sitio, divididos por parte de la interfaz.
+   El orden importa: los archivos de abajo pueden ajustar reglas de los de arriba. */
+
+@import './styles/base.css';       /* colores y estilos generales */
+@import './styles/barra.css';      /* barra superior y pestañas */
+@import './styles/layout.css';     /* titulo, columnas y paneles de cada modulo */
+@import './styles/botones.css';    /* botones */
+@import './styles/mensajes.css';   /* mensajes de cargando, error, info y exito */
+@import './styles/filtros.css';    /* panel de filtros */
+@import './styles/tabla.css';      /* tabla, badges y paginacion */
+@import './styles/ventana.css';    /* ventanas de detalle */
+@import './styles/formulario.css'; /* formulario y buscador */

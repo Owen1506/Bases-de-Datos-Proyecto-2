@@ -1,0 +1,51 @@
+/* Barra superior tipo ventana de Windows 11 y pestañas de los modulos */
+
+.barra-ventana {
+  background-color: var(--barra);
+  color: white;
+  padding: clamp(8px, 0.8vw, 12px) clamp(12px, 1.1vw, 18px) 0 clamp(12px, 1.1vw, 18px);
+}
+
+.barra-titulo {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.5vw, 8px);
+  font-size: clamp(13px, 0.95vw, 15px);
+  font-weight: 600;
+  margin-bottom: clamp(8px, 0.8vw, 12px);
+}
+
+.pestanas {
+  display: flex;
+  gap: clamp(4px, 0.5vw, 8px);
+  overflow-x: auto;
+}
+
+/* Pestañas inactivas: fondo un poco mas claro que la barra para que se distingan */
+.pestana {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.5vw, 8px);
+  padding: clamp(8px, 0.8vw, 12px) clamp(12px, 1.1vw, 18px);
+  border: none;
+  border-radius: 8px 8px 0 0;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #e6ebf1;
+  font-size: clamp(13px, 0.95vw, 15px);
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pestana:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+/* La pestaña activa tiene el mismo color que el contenido,
+   asi parece que esta "pegada" a la pagina de abajo */
+.pestana.activa {
+  background-color: var(--gris-fondo);
+  color: var(--azul);
+  font-weight: 600;
+}

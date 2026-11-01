@@ -1,0 +1,27 @@
+/* Mensajes de estado: cargando, error, informacion y exito */
+
+.mensaje {
+  padding: clamp(8px, 0.8vw, 12px) clamp(12px, 1.1vw, 18px);
+  border-radius: 6px;
+  background-color: white;
+  border: 1px solid var(--gris-borde);
+  font-size: clamp(13px, 0.95vw, 15px);
+}
+
+.mensaje.error {
+  background-color: #fdecea;
+  border-color: #f5c2bd;
+  color: #a12a1f;
+}
+
+.mensaje.info {
+  background-color: var(--azul-claro);
+  border-color: #bcd3ea;
+  color: var(--azul);
+}
+
+.mensaje.exito {
+  background-color: #e6f4ea;
+  border-color: #b7dfc3;
+  color: #23733c;
+}

@@ -1,0 +1,26 @@
+/* Colores del sitio y estilos generales de la pagina */
+
+:root {
+  --azul: #1f4e79;
+  --azul-claro: #e8f0f8;
+  --naranja: #e07a1f;
+  --gris-fondo: #f3f5f8;
+  --gris-borde: #d5dbe3;
+  --texto: #222;
+  --barra: #1e2a38;
+}
+
+/* Las medidas usan clamp(minimo, valor segun ancho de pantalla, maximo):
+   en pantallas pequeñas se usa el minimo, en grandes el maximo y en medio crece poco a poco */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+  font-size: clamp(13px, 0.95vw, 15px);
+  background-color: var(--gris-fondo);
+  color: var(--texto);
+}

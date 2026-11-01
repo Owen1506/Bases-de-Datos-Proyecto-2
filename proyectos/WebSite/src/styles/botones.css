@@ -1,0 +1,67 @@
+/* Botones del sitio */
+
+.boton {
+  background-color: var(--azul);
+  color: white;
+  border: 1px solid var(--azul);
+  border-radius: 6px;
+  padding: clamp(8px, 0.8vw, 12px) clamp(12px, 1.1vw, 18px);
+  font-size: clamp(13px, 0.95vw, 15px);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.boton:hover {
+  opacity: 0.9;
+}
+
+.boton.secundario {
+  background-color: white;
+  color: var(--azul);
+}
+
+.boton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Boton que se ve como un enlace (por ejemplo el proveedor en el detalle de un producto) */
+.enlace {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #0b57d0;
+  text-decoration: underline;
+  font-size: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+/* Botones pequeños con icono (editar y eliminar en la tabla) */
+.boton-icono {
+  background: white;
+  border: 1px solid var(--gris-borde);
+  border-radius: 6px;
+  padding: clamp(4px, 0.5vw, 8px);
+  margin-left: clamp(2px, 0.3vw, 4px);
+  color: var(--azul);
+  cursor: pointer;
+  line-height: 0;
+}
+
+.boton-icono:hover {
+  background-color: var(--azul);
+  border-color: var(--azul);
+  color: white;
+}
+
+.boton-icono.peligro {
+  color: #b3261e;
+}
+
+.boton-icono.peligro:hover {
+  background-color: #b3261e;
+  border-color: #b3261e;
+  color: white;
+}

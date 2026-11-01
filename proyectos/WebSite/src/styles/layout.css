@@ -1,0 +1,51 @@
+/* Distribucion de cada modulo: titulo, panel de filtros y panel de resultados */
+
+.contenido {
+  max-width: clamp(960px, 88vw, 1500px);
+  margin: 0 auto;
+  padding: clamp(16px, 1.6vw, 26px) clamp(12px, 1.1vw, 18px);
+}
+
+.contenido h2 {
+  color: var(--azul);
+  font-size: clamp(20px, 1.8vw, 26px);
+  margin: 0 0 clamp(2px, 0.3vw, 4px) 0;
+}
+
+.descripcion {
+  margin: 0 0 clamp(12px, 1.1vw, 18px) 0;
+  color: #666;
+  font-size: clamp(13px, 0.95vw, 15px);
+}
+
+/* Titulo del modulo con el boton "+ Nuevo" a la derecha */
+.titulo-modulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: clamp(12px, 1.1vw, 18px);
+}
+
+/* Dos columnas: filtros a la izquierda, resultados a la derecha */
+.modulo-columnas {
+  display: grid;
+  grid-template-columns: clamp(220px, 18vw, 300px) 1fr;
+  gap: clamp(12px, 1.1vw, 18px);
+  align-items: start;
+}
+
+/* Tarjeta blanca */
+.panel {
+  background-color: white;
+  border: 1px solid var(--gris-borde);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: clamp(12px, 1.1vw, 18px);
+}
+
+@media (max-width: 800px) {
+  /* los filtros pasan arriba de la tabla */
+  .modulo-columnas {
+    grid-template-columns: 1fr;
+  }
+}

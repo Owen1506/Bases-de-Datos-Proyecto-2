@@ -1,0 +1,54 @@
+/* Panel de filtros de la izquierda */
+
+.panel-filtros {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 1.1vw, 18px);
+}
+
+.panel-filtros h3 {
+  margin: 0;
+  font-size: clamp(14px, 1.1vw, 17px);
+  color: var(--azul);
+}
+
+.panel-filtros label {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2px, 0.3vw, 4px);
+  font-size: clamp(12px, 0.85vw, 13px);
+  color: #555;
+}
+
+.panel-filtros input,
+.panel-filtros select {
+  padding: clamp(4px, 0.5vw, 8px) clamp(8px, 0.8vw, 12px);
+  font-size: clamp(13px, 0.95vw, 15px);
+  font-family: inherit;
+  border: 1px solid var(--gris-borde);
+  border-radius: 6px;
+}
+
+/* Campos de un rango (desde / hasta): van lado a lado si caben (cada uno necesita
+   al menos 140px); si no, se acomodan uno debajo del otro */
+.rango {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: clamp(8px, 0.8vw, 12px);
+}
+
+/* sin esto el campo de fecha no se encoge y se sale del panel */
+.rango label,
+.rango input {
+  min-width: 0;
+}
+
+.rango input {
+  width: 100%;
+}
+
+.panel-filtros input:focus,
+.panel-filtros select:focus {
+  outline: 2px solid var(--azul);
+  border-color: transparent;
+}
