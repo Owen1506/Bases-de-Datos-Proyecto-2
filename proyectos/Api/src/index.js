@@ -10,6 +10,7 @@ const inventario = require('./routes/inventario');
 const ventas = require('./routes/ventas');
 const catalogos = require('./routes/catalogos');
 const estadisticas = require('./routes/estadisticas');
+const auth = require('./routes/auth');
 
 const app = express();
 const PUERTO = 3000;
@@ -23,7 +24,7 @@ app.use('/api/inventario', inventario);
 app.use('/api/ventas', ventas);
 app.use('/api/catalogos', catalogos);
 app.use('/api/estadisticas', estadisticas);
-
+app.use('/api/auth', auth);
 // Ruta no encontrada
 app.use((req, res) => {
   res.status(404).json({ mensaje: 'Ruta no encontrada.' });

@@ -10,3 +10,4 @@
 @import './styles/tabla.css';      /* tabla, badges y paginacion */
 @import './styles/ventana.css';    /* ventanas de detalle */
 @import './styles/formulario.css'; /* formulario y buscador */
+@import './styles/login.css';      /* pantalla de inicio de sesión */
