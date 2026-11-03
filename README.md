@@ -15,6 +15,8 @@ II Semestre, 2026
 
 # Sitio web WideWorldImporters - SQL Server + Node.js + React
 
+La configuración de los tres contenedores del Proyecto 2 está documentada en [Script sql/Proyecto2/README.md](Script%20sql/Proyecto2/README.md).
+
 ### Integrantes
 - Elian J. Trejos Quirós - 2024143262
 - Owen Smith Cerdas - 2024083328
@@ -117,6 +119,20 @@ npm run dev
 ```
 
 Abrir http://localhost:5173
+
+### Inicio de sesión (Proyecto 2, en desarrollo)
+
+La página abre en el formulario de ingreso. El formulario llama a `POST /api/auth/login`;
+la API valida las credenciales contra `dbo.Usuarios` en Corporativo. Para reproducir
+la base y crear los usuarios de prueba, seguir el orden indicado en la
+[documentación de los nodos](Script%20sql/Proyecto2/README.md). Configurar
+`MSSQL_CORPORATIVO_PASSWORD` en el `.env` de la raíz con la contraseña de `sa`
+del contenedor Corporativo.
+
+El administrador ve Clientes, Proveedores, Inventario y Ventas; Corporativo ve
+Estadísticas. La sesión se mantiene solo en memoria del navegador y se cierra al
+recargar la página. Todavía falta proteger las demás rutas de la API y usar cuentas
+de SQL Server con permisos limitados.
 
 ## Estructura del proyecto
 
