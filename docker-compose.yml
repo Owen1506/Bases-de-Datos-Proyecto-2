@@ -19,6 +19,7 @@ services:
   # Proyecto 2: los tres nodos del sistema distribuido.
   # El hostname debe ser igual al nombre del contenedor: la replicación se conecta por nombre de servidor.
   # El Agent ejecuta los agentes de la replicación.
+  # CLAVE_*: contraseñas de los tres nodos, para los scripts de replicación.
   wwi_sanjose:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: wwi_sanjose
@@ -28,6 +29,9 @@ services:
       MSSQL_SA_PASSWORD: ${MSSQL_SANJOSE_PASSWORD}
       MSSQL_PID: "Developer"
       MSSQL_AGENT_ENABLED: "true"
+      CLAVE_CORPORATIVO: ${MSSQL_CORPORATIVO_PASSWORD}
+      CLAVE_SANJOSE: ${MSSQL_SANJOSE_PASSWORD}
+      CLAVE_LIMON: ${MSSQL_LIMON_PASSWORD}
     ports:
       - "1434:1433"
     volumes:
@@ -46,6 +50,9 @@ services:
       MSSQL_SA_PASSWORD: ${MSSQL_LIMON_PASSWORD}
       MSSQL_PID: "Developer"
       MSSQL_AGENT_ENABLED: "true"
+      CLAVE_CORPORATIVO: ${MSSQL_CORPORATIVO_PASSWORD}
+      CLAVE_SANJOSE: ${MSSQL_SANJOSE_PASSWORD}
+      CLAVE_LIMON: ${MSSQL_LIMON_PASSWORD}
     ports:
       - "1435:1433"
     volumes:
@@ -64,6 +71,9 @@ services:
       MSSQL_SA_PASSWORD: ${MSSQL_CORPORATIVO_PASSWORD}
       MSSQL_PID: "Developer"
       MSSQL_AGENT_ENABLED: "true"
+      CLAVE_CORPORATIVO: ${MSSQL_CORPORATIVO_PASSWORD}
+      CLAVE_SANJOSE: ${MSSQL_SANJOSE_PASSWORD}
+      CLAVE_LIMON: ${MSSQL_LIMON_PASSWORD}
     ports:
       - "1436:1433"
     volumes:
