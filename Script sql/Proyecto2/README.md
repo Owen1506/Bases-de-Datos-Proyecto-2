@@ -8,55 +8,53 @@ El sistema distribuido utiliza tres contenedores independientes de SQL Server 20
 | Limón | `wwi_limon` | `localhost,1435` | `WideWorldImporters_Limon` | `wwi_limon_data` |
 | Corporativo | `wwi_corporativo` | `localhost,1436` | `WideWorldImporters_Corporativo` | `wwi_corporativo_data` |
 
-El contenedor `sqlserver_wwi` del Proyecto 1 usa el puerto 1433 y no forma parte de estos tres nodos.
+El contenedor `sql_wwi` del Proyecto 1 usa el puerto 1433 y no forma parte de estos tres nodos. La API lo sigue usando para los módulos que todavía no se pasan a los nodos.
 
-## Recrear los contenedores desde cero
+## Levantar los nodos
 
-Ejecutar los siguientes comandos en **PowerShell**, con Docker Desktop iniciado. La contraseña debe cumplir los requisitos de complejidad de SQL Server. No se guarda en el repositorio.
+Los tres nodos y el contenedor del Proyecto 1 están definidos en `docker-compose.yml`, en la raíz del repositorio. Los comandos son los mismos en Windows, Linux y macOS, con Docker Desktop iniciado.
 
-### 1. Crear la red Docker
+Cada nodo tiene el Agent de SQL Server activado (lo necesita la replicación) y ve la carpeta `backups/` de la raíz en `/var/opt/mssql/backup` y la carpeta `Script sql/` en `/scripts`.
 
-```powershell
-docker network create wwi_red
+### 1. Configurar las contraseñas
+
+Copiar `.env.example` a `.env` en la raíz y poner la contraseña de `sa` de cada nodo en `MSSQL_SANJOSE_PASSWORD`, `MSSQL_LIMON_PASSWORD` y `MSSQL_CORPORATIVO_PASSWORD`. Deben cumplir los requisitos de complejidad de SQL Server. El archivo `.env` no se sube al repositorio.
+
+### 2. Copiar el respaldo de WWI
+
+Copiar `WideWorldImporters-Full.bak` en la carpeta `backups/` de la raíz.
+
+### 3. Levantar los contenedores
+
 ```
-
-### 2. Configurar la contraseña de `sa`
-
-```powershell
-$env:MSSQL_SA_PASSWORD = Read-Host "Contraseña para SQL Server"
-```
-
-Cuando aparezca el mensaje, escribir la contraseña y presionar Enter. Los tres contenedores recibirán ese valor mediante `-e MSSQL_SA_PASSWORD`.
-
-### 3. Crear los tres contenedores
-
-**San José (puerto 1434):**
-
-```powershell
-docker run -d --name wwi_sanjose --hostname wwi_sanjose --network wwi_red -e "ACCEPT_EULA=Y" -e MSSQL_SA_PASSWORD -e "MSSQL_PID=Developer" -p 1434:1433 -v wwi_sanjose_data:/var/opt/mssql mcr.microsoft.com/mssql/server:2022-latest
-```
-
-**Limón (puerto 1435):**
-
-```powershell
-docker run -d --name wwi_limon --hostname wwi_limon --network wwi_red -e "ACCEPT_EULA=Y" -e MSSQL_SA_PASSWORD -e "MSSQL_PID=Developer" -p 1435:1433 -v wwi_limon_data:/var/opt/mssql mcr.microsoft.com/mssql/server:2022-latest
-```
-
-**Corporativo (puerto 1436):**
-
-```powershell
-docker run -d --name wwi_corporativo --hostname wwi_corporativo --network wwi_red -e "ACCEPT_EULA=Y" -e MSSQL_SA_PASSWORD -e "MSSQL_PID=Developer" -p 1436:1433 -v wwi_corporativo_data:/var/opt/mssql mcr.microsoft.com/mssql/server:2022-latest
-```
-
-### 4. Verificar los contenedores
-
-```powershell
+docker compose up -d
 docker ps
 ```
 
-Los tres nombres deben aparecer en la lista. Para conectarse desde SSMS, usar la dirección indicada en la tabla, autenticación de SQL Server, usuario `sa` y la contraseña configurada en el paso 2.
+Deben aparecer `wwi_sanjose`, `wwi_limon`, `wwi_corporativo` y `sql_wwi`. Para conectarse desde SSMS, usar la dirección de la tabla, autenticación de SQL Server, usuario `sa` y la contraseña de ese nodo en `.env`.
 
-Los comandos `docker run` crean las instancias y sus volúmenes; **no crean automáticamente las bases de datos** de la tabla. Cada base debe crearse o restaurarse en su instancia correspondiente. Si la red o un contenedor ya existe, no repetir el comando de creación para ese recurso.
+docker compose crea las instancias y sus volúmenes; **no crea las bases de datos** de la tabla. Cada base se crea con los scripts de la sección siguiente.
+
+### 4. Verificar cada nodo
+
+```
+docker exec wwi_corporativo bash -c '/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C -i /scripts/Proyecto2/00_verificar_nodo.sql'
+```
+
+Repetir con `wwi_sanjose` y `wwi_limon`. El resultado debe decir `Correcto` en `NombreServidor` y `Activo` en `Agent`. La contraseña se toma de las variables del propio contenedor, por eso el comando funciona igual en PowerShell y en bash.
+
+### Si los contenedores ya se crearon con `docker run`
+
+Los contenedores creados con `docker run` no tienen el Agent activado ni la carpeta `backups/`. Para pasarlos a docker compose sin perder datos:
+
+```
+docker stop wwi_sanjose wwi_limon wwi_corporativo
+docker rm wwi_sanjose wwi_limon wwi_corporativo
+docker network rm wwi_red
+docker compose up -d
+```
+
+`docker rm` borra solo los contenedores: las bases quedan en los volúmenes `wwi_sanjose_data`, `wwi_limon_data` y `wwi_corporativo_data`, y docker compose los vuelve a usar. Al levantar, docker compose avisa que esos volúmenes no los creó él; es normal. En `.env` hay que poner la misma contraseña de `sa` que se usó al crear los contenedores, porque la de un volumen existente no cambia.
 
 ## Crear las bases de datos
 
@@ -81,4 +79,4 @@ Ejecutar los archivos en este orden en `localhost,1436`:
 
 Los archivos `.local.sql` están excluidos de Git. No publicar las contraseñas de los usuarios, los hashes reales ni la contraseña de la clave maestra. Conservar respaldos seguros de la clave maestra y del certificado con su clave privada para poder recuperar los datos cifrados.
 
-La API usa `MSSQL_CORPORATIVO_PASSWORD` en el `.env` de la raíz para conectarse a Corporativo. Al crear los nodos con los comandos anteriores, ese valor debe coincidir con la contraseña de `sa` indicada en PowerShell. El login web consulta la API; las demás rutas y permisos de SQL Server requieren una etapa posterior de autorización.
+La API usa `MSSQL_CORPORATIVO_PASSWORD` en el `.env` de la raíz para conectarse a Corporativo. Es la misma variable que usa docker compose para la contraseña de `sa` del contenedor Corporativo. El login web consulta la API; las demás rutas y permisos de SQL Server requieren una etapa posterior de autorización.
