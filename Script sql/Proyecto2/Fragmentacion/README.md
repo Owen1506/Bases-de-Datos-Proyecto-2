@@ -40,6 +40,25 @@ La cantidad original se reparte así por producto: San José recibe `Math.ceil(c
 
 La carga se hace en una transacción por nodo. Si un nodo ya tiene exactamente los datos del JSON, se omite al repetir `cargar`; si tiene datos diferentes, se detiene antes de escribir. `verificar` compara los productos y grupos completos con el JSON y comprueba la cantidad esperada en cada sucursal. El JSON es solo una instantánea inicial: cambios posteriores requieren la futura replicación y la adaptación de la API.
 
+## Catálogos de referencia del producto
+
+`catalogo.ProveedoresBasicos` (ID y nombre), `catalogo.GruposProducto`, `catalogo.Colores` y `catalogo.TiposEmpaque`. Estos IDs permiten interpretar los campos `ProveedorID`, `ColorID`, `UnidadEmpaqueID`, `EmpaqueExteriorID` y `GrupoID` de los productos. Los contactos, direcciones, teléfonos y datos bancarios de proveedores **no** se exportan a las sucursales.
+
+Después de completar la carga inicial de productos anterior:
+
+1. Ejecutar `04_catalogos_referencia.sql` en Corporativo, San José y Limón.
+2. Desde `proyectos/Api`, ejecutar:
+
+   ```bash
+   node scripts/catalogosProducto.js exportar
+   node scripts/catalogosProducto.js cargar
+   node scripts/catalogosProducto.js verificar
+   ```
+
+3. Si se desea comprobar directamente en SQL Server, ejecutar `05_verificar_referencias.sql` en cada nodo. Debe terminar con `EstadoReferencias = CORRECTO`.
+
+El exportador guarda `backups/fragmentacion/catalogos_referencia.json` sin reemplazar un archivo existente. La carga conserva los IDs originales, comprueba que las cuatro tablas coincidan con el JSON y rechaza productos que referencien IDs inexistentes. Cada nodo se carga en una transacción; si ya coincide con el archivo, se omite al repetir el comando. Este paso no cambia las publicaciones ni suscripciones de replicación.
+
 ## Correspondencia con Proyecto 1
 
 | Origen | Destino | Nota |
@@ -48,4 +67,4 @@ La carga se hace en una transacción por nodo. Si un nodo ya tiene exactamente l
 | `Warehouse.StockItemStockGroups` | `catalogo.ProductoGrupos` | Relación entre productos y grupos. |
 | `Warehouse.StockItemHoldings` | `inventario.Existencias` | Cargar por sucursal; la base original no distingue San José de Limón. |
 
-Faltan los catálogos relacionados (`Suppliers`, `StockGroups`, `Colors`, `PackageTypes`) y la fragmentación de clientes, proveedores y facturas.
+Quedan pendientes los fragmentos completos de clientes y proveedores (con datos sensibles solo en Corporativo), las facturas propias de cada sucursal y la conexión de la API con estos nodos.
