@@ -1,12 +1,5 @@
--- Paso 3 (los tres nodos, conectado a la base del nodo): tablas de prueba.
--- PruebaCatalogo: Corporativo -> sucursales. PruebaFacturas: sucursales -> Corporativo.
-IF OBJECT_ID(N'dbo.PruebaCatalogo', N'U') IS NULL
-    CREATE TABLE dbo.PruebaCatalogo (
-        ProductoID INT NOT NULL PRIMARY KEY,
-        Nombre NVARCHAR(100) NOT NULL,
-        Precio DECIMAL(18,2) NOT NULL
-    );
-
+-- Paso 3 (los tres nodos, conectado a la base del nodo): tabla de prueba de facturas.
+-- PruebaFacturas: sucursales -> Corporativo. Se cambia por las facturas reales.
 IF OBJECT_ID(N'dbo.PruebaFacturas', N'U') IS NULL
     CREATE TABLE dbo.PruebaFacturas (
         SucursalID INT NOT NULL,
@@ -17,7 +10,7 @@ IF OBJECT_ID(N'dbo.PruebaFacturas', N'U') IS NULL
     );
 GO
 
--- Verificar: deben aparecer las dos tablas
+-- Verificar: debe aparecer la tabla
 SELECT DB_NAME() AS Base, name AS Tabla
 FROM sys.tables
 WHERE name LIKE N'Prueba%';
