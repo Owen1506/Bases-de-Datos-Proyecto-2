@@ -3,49 +3,56 @@
 
 -- 1. Catálogo: Corporativo -> San José y Limón
 
--- Corporativo: insertar
+-- Corporativo: insertar un producto con su grupo
 USE WideWorldImporters_Corporativo;
-INSERT INTO dbo.PruebaCatalogo (ProductoID, Nombre, Precio) VALUES (1, N'Producto de prueba', 10.00);
+INSERT INTO catalogo.Productos (ProductoID, Nombre, ProveedorID, UnidadEmpaqueID, EmpaqueExteriorID,
+    DiasEntrega, CantidadPorEmpaque, EsRefrigerado, Impuesto, PrecioUnitario, Peso)
+VALUES (1000, N'Producto de prueba', 1, 7, 7, 7, 1, 0, 15, 10.00, 0.5);
+INSERT INTO catalogo.ProductoGrupos (ProductoID, GrupoID) VALUES (1000, 1);
 GO
 
--- San José: verificar (debe aparecer)
+-- San José: verificar (debe aparecer con su grupo)
 USE WideWorldImporters_SanJose;
-SELECT ProductoID, Nombre, Precio FROM dbo.PruebaCatalogo;
+SELECT p.ProductoID, p.Nombre, p.PrecioUnitario, g.GrupoID
+FROM catalogo.Productos p LEFT JOIN catalogo.ProductoGrupos g ON g.ProductoID = p.ProductoID
+WHERE p.ProductoID = 1000;
 GO
 
--- Limón: verificar (debe aparecer)
+-- Limón: verificar (debe aparecer con su grupo)
 USE WideWorldImporters_Limon;
-SELECT ProductoID, Nombre, Precio FROM dbo.PruebaCatalogo;
+SELECT p.ProductoID, p.Nombre, p.PrecioUnitario, g.GrupoID
+FROM catalogo.Productos p LEFT JOIN catalogo.ProductoGrupos g ON g.ProductoID = p.ProductoID
+WHERE p.ProductoID = 1000;
 GO
 
 -- Corporativo: actualizar
 USE WideWorldImporters_Corporativo;
-UPDATE dbo.PruebaCatalogo SET Precio = 12.50 WHERE ProductoID = 1;
+UPDATE catalogo.Productos SET PrecioUnitario = 12.50 WHERE ProductoID = 1000;
 GO
 
 -- San José: verificar (precio 12.50)
 USE WideWorldImporters_SanJose;
-SELECT ProductoID, Nombre, Precio FROM dbo.PruebaCatalogo;
+SELECT ProductoID, Nombre, PrecioUnitario FROM catalogo.Productos WHERE ProductoID = 1000;
 GO
 
 -- Limón: verificar (precio 12.50)
 USE WideWorldImporters_Limon;
-SELECT ProductoID, Nombre, Precio FROM dbo.PruebaCatalogo;
+SELECT ProductoID, Nombre, PrecioUnitario FROM catalogo.Productos WHERE ProductoID = 1000;
 GO
 
--- Corporativo: borrar
+-- Corporativo: borrar (el grupo se borra en cascada)
 USE WideWorldImporters_Corporativo;
-DELETE FROM dbo.PruebaCatalogo WHERE ProductoID = 1;
+DELETE FROM catalogo.Productos WHERE ProductoID = 1000;
 GO
 
 -- San José: verificar (sin filas)
 USE WideWorldImporters_SanJose;
-SELECT ProductoID, Nombre, Precio FROM dbo.PruebaCatalogo;
+SELECT ProductoID, Nombre, PrecioUnitario FROM catalogo.Productos WHERE ProductoID = 1000;
 GO
 
 -- Limón: verificar (sin filas)
 USE WideWorldImporters_Limon;
-SELECT ProductoID, Nombre, Precio FROM dbo.PruebaCatalogo;
+SELECT ProductoID, Nombre, PrecioUnitario FROM catalogo.Productos WHERE ProductoID = 1000;
 GO
 
 
