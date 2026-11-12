@@ -1,5 +1,5 @@
--- Paso 4 (Corporativo): publicar PruebaCatalogo hacia San José y Limón.
--- Sin instantánea inicial: las sucursales ya tienen la tabla vacía.
+-- Paso 4 (Corporativo): publicar el catálogo (tablas catalogo.*) hacia San José y Limón.
+-- Sin instantánea inicial: la carga de Fragmentacion deja los tres nodos con los mismos datos.
 USE WideWorldImporters_Corporativo;
 GO
 
@@ -22,9 +22,19 @@ EXEC sp_addpublication
     @replicate_ddl = 0;
 GO
 
-EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'PruebaCatalogo',
-    @source_owner = N'dbo', @source_object = N'PruebaCatalogo',
-    @destination_owner = N'dbo';
+-- Artículos: productos y sus tablas de referencia
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'Productos',
+    @source_owner = N'catalogo', @source_object = N'Productos', @destination_owner = N'catalogo';
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'ProductoGrupos',
+    @source_owner = N'catalogo', @source_object = N'ProductoGrupos', @destination_owner = N'catalogo';
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'ProveedoresBasicos',
+    @source_owner = N'catalogo', @source_object = N'ProveedoresBasicos', @destination_owner = N'catalogo';
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'GruposProducto',
+    @source_owner = N'catalogo', @source_object = N'GruposProducto', @destination_owner = N'catalogo';
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'Colores',
+    @source_owner = N'catalogo', @source_object = N'Colores', @destination_owner = N'catalogo';
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'TiposEmpaque',
+    @source_owner = N'catalogo', @source_object = N'TiposEmpaque', @destination_owner = N'catalogo';
 GO
 
 EXEC sp_addsubscription
