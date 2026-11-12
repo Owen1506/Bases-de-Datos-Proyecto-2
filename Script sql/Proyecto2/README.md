@@ -1,5 +1,6 @@
 # Proyecto 2: configuración de los nodos SQL Server
 
+
 El sistema distribuido utiliza tres contenedores independientes de SQL Server 2022 Developer. Todos se comunican mediante la red Docker `wwi_red` y cada uno conserva sus datos en un volumen propio.
 
 | Nodo | Contenedor | Conexión desde SSMS | Base de datos | Volumen |
