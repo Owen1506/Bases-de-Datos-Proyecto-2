@@ -6,6 +6,7 @@ import Estadisticas from './pages/Estadisticas';
 import Inventario from './pages/Inventario';
 import Ventas from './pages/Ventas';
 import Login from './pages/Login';
+import { elegirSucursal } from './api';
 
 // Modulos del sitio, cada uno es una pestaña
 const MODULOS = [
@@ -22,11 +23,13 @@ function App() {
   const modulosPermitidos = usuario ? MODULOS.filter((modulo) => modulo.roles.includes(usuario.rol)) : [];
 
   function ingresar(datosUsuario) {
+    elegirSucursal(datosUsuario.SucursalID);
     setUsuario(datosUsuario);
     setModuloActivo(datosUsuario.rol === 'Corporativo' ? 'estadisticas' : 'clientes');
   }
 
   function salir() {
+    elegirSucursal(null);
     setUsuario(null);
     setModuloActivo('clientes');
   }
