@@ -5,54 +5,54 @@
 
 -- Corporativo: insertar un producto con su grupo
 USE WideWorldImporters_Corporativo;
-INSERT INTO catalogo.Productos (ProductoID, Nombre, ProveedorID, UnidadEmpaqueID, EmpaqueExteriorID,
-    DiasEntrega, CantidadPorEmpaque, EsRefrigerado, Impuesto, PrecioUnitario, Peso)
+INSERT INTO Warehouse.StockItems (StockItemID, StockItemName, SupplierID, UnitPackageID, OuterPackageID,
+    LeadTimeDays, QuantityPerOuter, IsChillerStock, TaxRate, UnitPrice, TypicalWeightPerUnit)
 VALUES (1000, N'Producto de prueba', 1, 7, 7, 7, 1, 0, 15, 10.00, 0.5);
-INSERT INTO catalogo.ProductoGrupos (ProductoID, GrupoID) VALUES (1000, 1);
+INSERT INTO Warehouse.StockItemStockGroups (StockItemID, StockGroupID) VALUES (1000, 1);
 GO
 
 -- San José: verificar (debe aparecer con su grupo)
 USE WideWorldImporters_SanJose;
-SELECT p.ProductoID, p.Nombre, p.PrecioUnitario, g.GrupoID
-FROM catalogo.Productos p LEFT JOIN catalogo.ProductoGrupos g ON g.ProductoID = p.ProductoID
-WHERE p.ProductoID = 1000;
+SELECT p.StockItemID, p.StockItemName, p.UnitPrice, g.StockGroupID
+FROM Warehouse.StockItems p LEFT JOIN Warehouse.StockItemStockGroups g ON g.StockItemID = p.StockItemID
+WHERE p.StockItemID = 1000;
 GO
 
 -- Limón: verificar (debe aparecer con su grupo)
 USE WideWorldImporters_Limon;
-SELECT p.ProductoID, p.Nombre, p.PrecioUnitario, g.GrupoID
-FROM catalogo.Productos p LEFT JOIN catalogo.ProductoGrupos g ON g.ProductoID = p.ProductoID
-WHERE p.ProductoID = 1000;
+SELECT p.StockItemID, p.StockItemName, p.UnitPrice, g.StockGroupID
+FROM Warehouse.StockItems p LEFT JOIN Warehouse.StockItemStockGroups g ON g.StockItemID = p.StockItemID
+WHERE p.StockItemID = 1000;
 GO
 
 -- Corporativo: actualizar
 USE WideWorldImporters_Corporativo;
-UPDATE catalogo.Productos SET PrecioUnitario = 12.50 WHERE ProductoID = 1000;
+UPDATE Warehouse.StockItems SET UnitPrice = 12.50 WHERE StockItemID = 1000;
 GO
 
 -- San José: verificar (precio 12.50)
 USE WideWorldImporters_SanJose;
-SELECT ProductoID, Nombre, PrecioUnitario FROM catalogo.Productos WHERE ProductoID = 1000;
+SELECT StockItemID, StockItemName, UnitPrice FROM Warehouse.StockItems WHERE StockItemID = 1000;
 GO
 
 -- Limón: verificar (precio 12.50)
 USE WideWorldImporters_Limon;
-SELECT ProductoID, Nombre, PrecioUnitario FROM catalogo.Productos WHERE ProductoID = 1000;
+SELECT StockItemID, StockItemName, UnitPrice FROM Warehouse.StockItems WHERE StockItemID = 1000;
 GO
 
 -- Corporativo: borrar (el grupo se borra en cascada)
 USE WideWorldImporters_Corporativo;
-DELETE FROM catalogo.Productos WHERE ProductoID = 1000;
+DELETE FROM Warehouse.StockItems WHERE StockItemID = 1000;
 GO
 
 -- San José: verificar (sin filas)
 USE WideWorldImporters_SanJose;
-SELECT ProductoID, Nombre, PrecioUnitario FROM catalogo.Productos WHERE ProductoID = 1000;
+SELECT StockItemID, StockItemName, UnitPrice FROM Warehouse.StockItems WHERE StockItemID = 1000;
 GO
 
 -- Limón: verificar (sin filas)
 USE WideWorldImporters_Limon;
-SELECT ProductoID, Nombre, PrecioUnitario FROM catalogo.Productos WHERE ProductoID = 1000;
+SELECT StockItemID, StockItemName, UnitPrice FROM Warehouse.StockItems WHERE StockItemID = 1000;
 GO
 
 

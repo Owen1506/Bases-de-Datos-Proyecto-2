@@ -1,4 +1,4 @@
--- Paso 4 (Corporativo): publicar el catálogo (tablas catalogo.*) hacia San José y Limón.
+-- Paso 4 (Corporativo): publicar el catálogo con nombres WWI hacia San José y Limón.
 -- Sin instantánea inicial: la carga de Fragmentacion deja los tres nodos con los mismos datos.
 USE WideWorldImporters_Corporativo;
 GO
@@ -23,18 +23,18 @@ EXEC sp_addpublication
 GO
 
 -- Artículos: productos y sus tablas de referencia
-EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'Productos',
-    @source_owner = N'catalogo', @source_object = N'Productos', @destination_owner = N'catalogo';
-EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'ProductoGrupos',
-    @source_owner = N'catalogo', @source_object = N'ProductoGrupos', @destination_owner = N'catalogo';
-EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'ProveedoresBasicos',
-    @source_owner = N'catalogo', @source_object = N'ProveedoresBasicos', @destination_owner = N'catalogo';
-EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'GruposProducto',
-    @source_owner = N'catalogo', @source_object = N'GruposProducto', @destination_owner = N'catalogo';
-EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'Colores',
-    @source_owner = N'catalogo', @source_object = N'Colores', @destination_owner = N'catalogo';
-EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'TiposEmpaque',
-    @source_owner = N'catalogo', @source_object = N'TiposEmpaque', @destination_owner = N'catalogo';
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'StockItems',
+    @source_owner = N'Warehouse', @source_object = N'StockItems', @destination_owner = N'Warehouse';
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'StockItemStockGroups',
+    @source_owner = N'Warehouse', @source_object = N'StockItemStockGroups', @destination_owner = N'Warehouse';
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'Suppliers',
+    @source_owner = N'Purchasing', @source_object = N'Suppliers', @destination_owner = N'Purchasing';
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'StockGroups',
+    @source_owner = N'Warehouse', @source_object = N'StockGroups', @destination_owner = N'Warehouse';
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'Colors',
+    @source_owner = N'Warehouse', @source_object = N'Colors', @destination_owner = N'Warehouse';
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'PackageTypes',
+    @source_owner = N'Warehouse', @source_object = N'PackageTypes', @destination_owner = N'Warehouse';
 GO
 
 EXEC sp_addsubscription

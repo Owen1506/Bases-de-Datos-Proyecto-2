@@ -26,36 +26,36 @@ BEGIN
     DECLARE @TamanoPagina INT = 10;
 
     SELECT
-        p.ProductoID,
-        p.Nombre,
-        STRING_AGG(g.Nombre, ', ') WITHIN GROUP (ORDER BY g.Nombre) AS Grupo,
-        COALESCE(e.CantidadDisponible, 0) AS CantidadDisponible,
+        p.StockItemID AS ProductoID,
+        p.StockItemName AS Nombre,
+        STRING_AGG(g.StockGroupName, ', ') WITHIN GROUP (ORDER BY g.StockGroupName) AS Grupo,
+        COALESCE(e.QuantityOnHand, 0) AS CantidadDisponible,
         COUNT(*) OVER() AS TotalRegistros
     FROM syn.Productos p
     LEFT JOIN syn.Existencias e
-        ON e.ProductoID = p.ProductoID
+        ON e.StockItemID = p.StockItemID
     LEFT JOIN syn.ProductoGrupos pg
-        ON pg.ProductoID = p.ProductoID
+        ON pg.StockItemID = p.StockItemID
     LEFT JOIN syn.GruposProducto g
-        ON g.GrupoID = pg.GrupoID
+        ON g.StockGroupID = pg.StockGroupID
     WHERE
-        (@Nombre IS NULL OR p.Nombre LIKE '%' + @Nombre + '%')
-        AND (@CantidadMin IS NULL OR COALESCE(e.CantidadDisponible, 0) >= @CantidadMin)
-        AND (@CantidadMax IS NULL OR COALESCE(e.CantidadDisponible, 0) <= @CantidadMax)
+        (@Nombre IS NULL OR p.StockItemName LIKE '%' + @Nombre + '%')
+        AND (@CantidadMin IS NULL OR COALESCE(e.QuantityOnHand, 0) >= @CantidadMin)
+        AND (@CantidadMax IS NULL OR COALESCE(e.QuantityOnHand, 0) <= @CantidadMax)
         AND (
             @GrupoID IS NULL
             OR EXISTS (
                 SELECT 1
                 FROM syn.ProductoGrupos x
-                WHERE x.ProductoID = p.ProductoID
-                  AND x.GrupoID = @GrupoID
+                WHERE x.StockItemID = p.StockItemID
+                  AND x.StockGroupID = @GrupoID
             )
         )
     GROUP BY
-        p.ProductoID,
-        p.Nombre,
-        e.CantidadDisponible
-    ORDER BY p.Nombre ASC
+        p.StockItemID,
+        p.StockItemName,
+        e.QuantityOnHand
+    ORDER BY p.StockItemName ASC
     OFFSET (@Pagina - 1) * @TamanoPagina ROWS
     FETCH NEXT @TamanoPagina ROWS ONLY;
 END;
@@ -69,39 +69,39 @@ BEGIN
     SET NOCOUNT ON;
 
     SELECT
-        p.ProductoID,
-        p.Nombre,
-        p.ProveedorID,
-        pr.Nombre AS Proveedor,
-        (SELECT STRING_AGG(g.Nombre, ', ') WITHIN GROUP (ORDER BY g.Nombre)
+        p.StockItemID AS ProductoID,
+        p.StockItemName AS Nombre,
+        p.SupplierID AS ProveedorID,
+        pr.SupplierName AS Proveedor,
+        (SELECT STRING_AGG(g.StockGroupName, ', ') WITHIN GROUP (ORDER BY g.StockGroupName)
          FROM syn.ProductoGrupos pg
-         JOIN syn.GruposProducto g ON g.GrupoID = pg.GrupoID
-         WHERE pg.ProductoID = p.ProductoID) AS Grupo,
-        c.Nombre AS Color,
-        up.Nombre AS UnidadEmpaquetamiento,
-        op.Nombre AS Empaquetamiento,
-        p.CantidadPorEmpaque AS CantidadEmpaquetamiento,
-        p.Marca,
-        p.Tamano,
-        p.Impuesto,
-        p.PrecioUnitario,
-        p.PrecioVenta,
-        p.Peso,
-        CONCAT(p.Nombre, N' ', p.ComentariosMarketing) AS PalabrasClave,
-        COALESCE(e.CantidadDisponible, 0) AS CantidadDisponible,
-        e.Ubicacion
+         JOIN syn.GruposProducto g ON g.StockGroupID = pg.StockGroupID
+         WHERE pg.StockItemID = p.StockItemID) AS Grupo,
+        c.ColorName AS Color,
+        up.PackageTypeName AS UnidadEmpaquetamiento,
+        op.PackageTypeName AS Empaquetamiento,
+        p.QuantityPerOuter AS CantidadEmpaquetamiento,
+        p.Brand AS Marca,
+        p.Size AS Tamano,
+        p.TaxRate AS Impuesto,
+        p.UnitPrice AS PrecioUnitario,
+        p.RecommendedRetailPrice AS PrecioVenta,
+        p.TypicalWeightPerUnit AS Peso,
+        CONCAT(p.StockItemName, N' ', p.MarketingComments) AS PalabrasClave,
+        COALESCE(e.QuantityOnHand, 0) AS CantidadDisponible,
+        e.BinLocation AS Ubicacion
     FROM syn.Productos p
     JOIN syn.ProveedoresBasicos pr
-        ON pr.ProveedorID = p.ProveedorID
+        ON pr.SupplierID = p.SupplierID
     LEFT JOIN syn.Colores c
         ON c.ColorID = p.ColorID
     JOIN syn.TiposEmpaque up
-        ON up.TipoEmpaqueID = p.UnidadEmpaqueID
+        ON up.PackageTypeID = p.UnitPackageID
     JOIN syn.TiposEmpaque op
-        ON op.TipoEmpaqueID = p.EmpaqueExteriorID
+        ON op.PackageTypeID = p.OuterPackageID
     LEFT JOIN syn.Existencias e
-        ON e.ProductoID = p.ProductoID
-    WHERE p.ProductoID = @ProductoID;
+        ON e.StockItemID = p.StockItemID
+    WHERE p.StockItemID = @ProductoID;
 END;
 GO
 
@@ -117,20 +117,20 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
 
-        IF NOT EXISTS (SELECT 1 FROM syn.Productos WHERE ProductoID = @ProductoID)
+        IF NOT EXISTS (SELECT 1 FROM syn.Productos WHERE StockItemID = @ProductoID)
             THROW 50001, 'El producto indicado no existe.', 1;
 
         IF @CantidadDisponible < 0
             THROW 50006, 'La cantidad disponible no puede ser negativa.', 1;
 
         -- UPDLOCK y HOLDLOCK: dos cambios a la vez no crean la misma fila dos veces
-        IF EXISTS (SELECT 1 FROM syn.Existencias WITH (UPDLOCK, HOLDLOCK) WHERE ProductoID = @ProductoID)
+        IF EXISTS (SELECT 1 FROM syn.Existencias WITH (UPDLOCK, HOLDLOCK) WHERE StockItemID = @ProductoID)
             UPDATE syn.Existencias
-            SET CantidadDisponible = @CantidadDisponible,
-                Ubicacion = @Ubicacion
-            WHERE ProductoID = @ProductoID;
+            SET QuantityOnHand = @CantidadDisponible,
+                BinLocation = @Ubicacion
+            WHERE StockItemID = @ProductoID;
         ELSE
-            INSERT INTO syn.Existencias (ProductoID, CantidadDisponible, Ubicacion)
+            INSERT INTO syn.Existencias (StockItemID, QuantityOnHand, BinLocation)
             VALUES (@ProductoID, @CantidadDisponible, @Ubicacion);
 
         COMMIT TRANSACTION;
