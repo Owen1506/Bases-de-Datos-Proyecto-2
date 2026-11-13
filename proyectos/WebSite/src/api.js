@@ -1,12 +1,23 @@
 const URL_API = 'http://localhost:3000/api';
 
+// Sucursal del usuario que inició sesión; la API la usa en inventario
+let sucursalActual = null;
+
+export function elegirSucursal(sucursalId) {
+  sucursalActual = sucursalId;
+}
+
+function encabezadoSucursal() {
+  return sucursalActual ? { 'X-Sucursal': String(sucursalActual) } : {};
+}
+
 // Hace una consulta a la API y devuelve los datos.
 // Si algo sale mal lanza un error con el mensaje para mostrarlo en pantalla.
 export async function consultar(ruta) {
   let respuesta;
 
   try {
-    respuesta = await fetch(URL_API + ruta);
+    respuesta = await fetch(URL_API + ruta, { headers: encabezadoSucursal() });
   } catch (error) {
     throw new Error('No se pudo conectar con el servidor. Verifique que la API esté encendida.');
   }
@@ -28,7 +39,7 @@ export async function enviar(ruta, metodo, datos) {
   try {
     respuesta = await fetch(URL_API + ruta, {
       method: metodo,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...encabezadoSucursal() },
       body: JSON.stringify(datos)
     });
   } catch (error) {
