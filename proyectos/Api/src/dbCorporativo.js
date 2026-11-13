@@ -11,6 +11,8 @@ const configCorporativo = {
   server: 'localhost',
   port: 1436,
   database: 'WideWorldImporters_Corporativo',
+  connectionTimeout: 5000,
+  requestTimeout: 15000,
   options: {
     encrypt: true,
     trustServerCertificate: true

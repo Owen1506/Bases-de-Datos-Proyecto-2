@@ -32,6 +32,11 @@ app.use((req, res) => {
 
 // Si algo falla en una ruta (por ejemplo la base no responde) cae aqui
 app.use((err, req, res, next) => {
+  // Errores con estado propio, por ejemplo un nodo que no responde (503)
+  if (err.estado) {
+    return res.status(err.estado).json({ mensaje: err.message });
+  }
+
   // Los errores de los SP con THROW 50001, 50002... traen un mensaje para el usuario
   if (err.number >= 50000) {
     return res.status(400).json({ mensaje: err.message });
