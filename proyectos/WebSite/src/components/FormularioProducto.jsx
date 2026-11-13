@@ -16,12 +16,11 @@ const DATOS_VACIOS = {
   PrecioUnitario: '',
   PrecioVenta: '',
   Impuesto: '',
-  CantidadDisponible: '',
-  Ubicacion: '',
   DiasEntrega: '',
   EsRefrigerado: false,
   CodigoBarras: '',
-  ComentariosMarketing: ''
+  ComentariosMarketing: '',
+  Version: ''
 };
 
 // Cambia null por '' para que los campos de texto no den error
@@ -55,7 +54,8 @@ function FormularioProducto({ productoId, alCerrar, alGuardar }) {
       setEmpaques(await consultar('/catalogos/tipos-empaque'));
 
       if (!esNuevo) {
-        const p = await consultar('/inventario/' + productoId);
+        // Se lee de Corporativo, que es donde se guarda el catálogo
+        const p = await consultar('/inventario/' + productoId + '/editar');
         setDatos({
           Nombre: p.Nombre,
           ProveedorID: p.ProveedorID,
@@ -71,12 +71,12 @@ function FormularioProducto({ productoId, alCerrar, alGuardar }) {
           PrecioUnitario: p.PrecioUnitario,
           PrecioVenta: textoOVacio(p.PrecioVenta),
           Impuesto: p.Impuesto,
-          CantidadDisponible: p.CantidadDisponible,
-          Ubicacion: p.Ubicacion,
           DiasEntrega: p.DiasEntrega,
           EsRefrigerado: p.EsRefrigerado,
           CodigoBarras: textoOVacio(p.CodigoBarras),
-          ComentariosMarketing: textoOVacio(p.ComentariosMarketing)
+          ComentariosMarketing: textoOVacio(p.ComentariosMarketing),
+          // al guardar se manda de vuelta; si otro usuario lo cambió, la API lo rechaza
+          Version: p.Version
         });
       }
     } catch (e) {
@@ -117,8 +117,6 @@ function FormularioProducto({ productoId, alCerrar, alGuardar }) {
     if (datos.PrecioUnitario === '' || Number(datos.PrecioUnitario) < 0) return 'Escriba el precio unitario.';
     if (datos.PrecioVenta !== '' && Number(datos.PrecioVenta) < 0) return 'El precio de venta no puede ser negativo.';
     if (datos.Impuesto === '' || Number(datos.Impuesto) < 0 || Number(datos.Impuesto) > 100) return 'El impuesto debe estar entre 0 y 100.';
-    if (datos.CantidadDisponible === '' || Number(datos.CantidadDisponible) < 0) return 'La cantidad disponible debe ser 0 o más.';
-    if (datos.Ubicacion.trim() === '') return 'Escriba la ubicación en el almacén.';
     if (datos.DiasEntrega === '' || Number(datos.DiasEntrega) < 0) return 'Los días de entrega deben ser 0 o más.';
     return '';
   }
@@ -278,20 +276,8 @@ function FormularioProducto({ productoId, alCerrar, alGuardar }) {
                 </label>
               </div>
 
-              <h4>Inventario</h4>
+              <h4>Otros datos</h4>
               <div className="campos">
-                <label>
-                  <span>Cantidad disponible <span className="obligatorio">*</span></span>
-                  <input type="number" min="0" step="1" value={datos.CantidadDisponible}
-                    onChange={(e) => cambiar('CantidadDisponible', e.target.value)} />
-                </label>
-
-                <label>
-                  <span>Ubicación <span className="obligatorio">*</span></span>
-                  <input type="text" maxLength={20} placeholder="Por ejemplo L-1" value={datos.Ubicacion}
-                    onChange={(e) => cambiar('Ubicacion', e.target.value)} />
-                </label>
-
                 <label>
                   <span>Días de entrega del proveedor <span className="obligatorio">*</span></span>
                   <input type="number" min="0" step="1" value={datos.DiasEntrega}
