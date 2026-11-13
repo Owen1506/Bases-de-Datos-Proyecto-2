@@ -98,14 +98,14 @@ END;
 GO
 
 -- Años con facturas disponibles para los filtros de reportes.
-CREATE OR ALTER PROCEDURE dbo.usp_Reporte_AñosFacturas
+CREATE OR ALTER PROCEDURE dbo.usp_Reporte_AniosFacturas
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    SELECT DISTINCT YEAR(InvoiceDate) AS Año
+    SELECT DISTINCT YEAR(InvoiceDate) AS Anio
     FROM syn.Invoices
-    ORDER BY Año;
+    ORDER BY Anio;
 END;
 GO
 
@@ -165,39 +165,39 @@ GO
 
 -- REPORTE 3: productos con mayor ganancia por año.
 CREATE OR ALTER PROCEDURE dbo.usp_Reporte_TopProductosGanancia
-    @Año INT = NULL,
+    @Anio INT = NULL,
     @Pagina INT = 1
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF @Año IS NOT NULL AND NOT EXISTS (
-        SELECT 1 FROM syn.Invoices WHERE YEAR(InvoiceDate) = @Año
+    IF @Anio IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM syn.Invoices WHERE YEAR(InvoiceDate) = @Anio
     )
         THROW 50020, 'El año indicado no tiene facturas registradas.', 1;
 
     ;WITH Ganancias AS (
         SELECT
-            YEAR(i.InvoiceDate) AS Año,
+            YEAR(i.InvoiceDate) AS Anio,
             si.StockItemID AS ProductoID,
             si.StockItemName AS Producto,
             SUM(il.LineProfit) AS GananciaTotal
         FROM syn.Invoices i
         JOIN syn.InvoiceLines il ON il.InvoiceID = i.InvoiceID
         JOIN syn.StockItems si ON si.StockItemID = il.StockItemID
-        WHERE @Año IS NULL OR YEAR(i.InvoiceDate) = @Año
+        WHERE @Anio IS NULL OR YEAR(i.InvoiceDate) = @Anio
         GROUP BY YEAR(i.InvoiceDate), si.StockItemID, si.StockItemName
     ), Clasificados AS (
         SELECT *, DENSE_RANK() OVER (
-            PARTITION BY Año ORDER BY GananciaTotal DESC
+            PARTITION BY Anio ORDER BY GananciaTotal DESC
         ) AS Posicion
         FROM Ganancias
     )
-    SELECT Año, Posicion, ProductoID, Producto, GananciaTotal,
+    SELECT Anio, Posicion, ProductoID, Producto, GananciaTotal,
            COUNT(*) OVER() AS TotalRegistros
     FROM Clasificados
     WHERE Posicion <= 5
-    ORDER BY Año DESC, Posicion, ProductoID
+    ORDER BY Anio DESC, Posicion, ProductoID
     OFFSET (@Pagina - 1) * 10 ROWS
     FETCH NEXT 10 ROWS ONLY;
 END;
@@ -205,129 +205,129 @@ GO
 
 -- REPORTE 4: clientes con más facturas por año y monto facturado.
 CREATE OR ALTER PROCEDURE dbo.usp_Reporte_TopClientesFacturas
-    @AñoInicio INT = NULL,
-    @AñoFin INT = NULL,
+    @AnioInicio INT = NULL,
+    @AnioFin INT = NULL,
     @Pagina INT = 1
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF @AñoInicio IS NOT NULL AND NOT EXISTS (
-        SELECT 1 FROM syn.Invoices WHERE YEAR(InvoiceDate) = @AñoInicio
+    IF @AnioInicio IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM syn.Invoices WHERE YEAR(InvoiceDate) = @AnioInicio
     )
         THROW 50021, 'El año inicial no tiene facturas registradas.', 1;
 
-    IF @AñoFin IS NOT NULL AND NOT EXISTS (
-        SELECT 1 FROM syn.Invoices WHERE YEAR(InvoiceDate) = @AñoFin
+    IF @AnioFin IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM syn.Invoices WHERE YEAR(InvoiceDate) = @AnioFin
     )
         THROW 50022, 'El año final no tiene facturas registradas.', 1;
 
-    IF @AñoInicio IS NOT NULL AND @AñoFin IS NOT NULL AND @AñoInicio > @AñoFin
+    IF @AnioInicio IS NOT NULL AND @AnioFin IS NOT NULL AND @AnioInicio > @AnioFin
         THROW 50023, 'El año inicial debe ser menor o igual que el año final.', 1;
 
     ;WITH MontosFactura AS (
         SELECT
             i.InvoiceID,
-            YEAR(i.InvoiceDate) AS Año,
+            YEAR(i.InvoiceDate) AS Anio,
             i.CustomerID AS ClienteID,
             SUM(COALESCE(il.ExtendedPrice, 0)) AS MontoFactura
         FROM syn.Invoices i
         LEFT JOIN syn.InvoiceLines il ON il.InvoiceID = i.InvoiceID
-        WHERE (@AñoInicio IS NULL OR YEAR(i.InvoiceDate) >= @AñoInicio)
-          AND (@AñoFin IS NULL OR YEAR(i.InvoiceDate) <= @AñoFin)
+        WHERE (@AnioInicio IS NULL OR YEAR(i.InvoiceDate) >= @AnioInicio)
+          AND (@AnioFin IS NULL OR YEAR(i.InvoiceDate) <= @AnioFin)
         GROUP BY i.InvoiceID, YEAR(i.InvoiceDate), i.CustomerID
     ), Totales AS (
         SELECT
-            mf.Año,
+            mf.Anio,
             c.CustomerID AS ClienteID,
             c.CustomerName AS Cliente,
             COUNT(*) AS CantidadFacturas,
             SUM(mf.MontoFactura) AS MontoTotalFacturado
         FROM MontosFactura mf
         JOIN syn.Customers c ON c.CustomerID = mf.ClienteID
-        GROUP BY mf.Año, c.CustomerID, c.CustomerName
+        GROUP BY mf.Anio, c.CustomerID, c.CustomerName
     ), Clasificados AS (
         SELECT *, DENSE_RANK() OVER (
-            PARTITION BY Año ORDER BY CantidadFacturas DESC
+            PARTITION BY Anio ORDER BY CantidadFacturas DESC
         ) AS Posicion
         FROM Totales
     )
-    SELECT Año, Posicion, ClienteID, Cliente, CantidadFacturas, MontoTotalFacturado,
+    SELECT Anio, Posicion, ClienteID, Cliente, CantidadFacturas, MontoTotalFacturado,
            COUNT(*) OVER() AS TotalRegistros
     FROM Clasificados
     WHERE Posicion <= 5
-    ORDER BY Año DESC, Posicion, MontoTotalFacturado DESC, ClienteID
+    ORDER BY Anio DESC, Posicion, MontoTotalFacturado DESC, ClienteID
     OFFSET (@Pagina - 1) * 10 ROWS
     FETCH NEXT 10 ROWS ONLY;
 END;
 GO
 
 
-CREATE OR ALTER PROCEDURE dbo.usp_Reporte_AñosOrdenesCompra
+CREATE OR ALTER PROCEDURE dbo.usp_Reporte_AniosOrdenesCompra
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    SELECT DISTINCT YEAR(OrderDate) AS Año
+    SELECT DISTINCT YEAR(OrderDate) AS Anio
     FROM syn.PurchaseOrders
-    ORDER BY Año;
+    ORDER BY Anio;
 END;
 GO
 
 -- REPORTE 5: proveedores con más órdenes de compra por año.
 CREATE OR ALTER PROCEDURE dbo.usp_Reporte_TopProveedoresOrdenes
-    @AñoInicio INT = NULL,
-    @AñoFin INT = NULL,
+    @AnioInicio INT = NULL,
+    @AnioFin INT = NULL,
     @Pagina INT = 1
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF @AñoInicio IS NOT NULL AND NOT EXISTS (
-        SELECT 1 FROM syn.PurchaseOrders WHERE YEAR(OrderDate) = @AñoInicio
+    IF @AnioInicio IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM syn.PurchaseOrders WHERE YEAR(OrderDate) = @AnioInicio
     )
         THROW 50024, 'El año inicial no tiene órdenes de compra registradas.', 1;
 
-    IF @AñoFin IS NOT NULL AND NOT EXISTS (
-        SELECT 1 FROM syn.PurchaseOrders WHERE YEAR(OrderDate) = @AñoFin
+    IF @AnioFin IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM syn.PurchaseOrders WHERE YEAR(OrderDate) = @AnioFin
     )
         THROW 50025, 'El año final no tiene órdenes de compra registradas.', 1;
 
-    IF @AñoInicio IS NOT NULL AND @AñoFin IS NOT NULL AND @AñoInicio > @AñoFin
+    IF @AnioInicio IS NOT NULL AND @AnioFin IS NOT NULL AND @AnioInicio > @AnioFin
         THROW 50026, 'El año inicial debe ser menor o igual que el año final.', 1;
 
     ;WITH MontosOrden AS (
         SELECT
             po.PurchaseOrderID,
-            YEAR(po.OrderDate) AS Año,
+            YEAR(po.OrderDate) AS Anio,
             po.SupplierID AS ProveedorID,
             SUM(COALESCE(pol.OrderedOuters * pol.ExpectedUnitPricePerOuter, 0)) AS MontoOrden
         FROM syn.PurchaseOrders po
         LEFT JOIN syn.PurchaseOrderLines pol ON pol.PurchaseOrderID = po.PurchaseOrderID
-        WHERE (@AñoInicio IS NULL OR YEAR(po.OrderDate) >= @AñoInicio)
-          AND (@AñoFin IS NULL OR YEAR(po.OrderDate) <= @AñoFin)
+        WHERE (@AnioInicio IS NULL OR YEAR(po.OrderDate) >= @AnioInicio)
+          AND (@AnioFin IS NULL OR YEAR(po.OrderDate) <= @AnioFin)
         GROUP BY po.PurchaseOrderID, YEAR(po.OrderDate), po.SupplierID
     ), Totales AS (
         SELECT
-            mo.Año,
+            mo.Anio,
             s.SupplierID AS ProveedorID,
             s.SupplierName AS Proveedor,
             COUNT(*) AS CantidadOrdenes,
             SUM(mo.MontoOrden) AS MontoTotal
         FROM MontosOrden mo
         JOIN syn.Suppliers s ON s.SupplierID = mo.ProveedorID
-        GROUP BY mo.Año, s.SupplierID, s.SupplierName
+        GROUP BY mo.Anio, s.SupplierID, s.SupplierName
     ), Clasificados AS (
         SELECT *, DENSE_RANK() OVER (
-            PARTITION BY Año ORDER BY CantidadOrdenes DESC
+            PARTITION BY Anio ORDER BY CantidadOrdenes DESC
         ) AS Posicion
         FROM Totales
     )
-    SELECT Año, Posicion, ProveedorID, Proveedor, CantidadOrdenes, MontoTotal,
+    SELECT Anio, Posicion, ProveedorID, Proveedor, CantidadOrdenes, MontoTotal,
            COUNT(*) OVER() AS TotalRegistros
     FROM Clasificados
     WHERE Posicion <= 5
-    ORDER BY Año DESC, Posicion, MontoTotal DESC, ProveedorID
+    ORDER BY Anio DESC, Posicion, MontoTotal DESC, ProveedorID
     OFFSET (@Pagina - 1) * 10 ROWS
     FETCH NEXT 10 ROWS ONLY;
 END;
