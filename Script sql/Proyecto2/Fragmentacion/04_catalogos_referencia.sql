@@ -1,6 +1,6 @@
 -- Ejecutar en Corporativo, San José y Limón antes de cargar los catálogos.
--- Solo se copia el ID y nombre del proveedor; los datos de contacto y bancarios
--- permanecen fuera de las sucursales.
+-- Este archivo crea SupplierID y SupplierName. El archivo 06 agrega los demas
+-- campos publicos; los datos de contacto y bancarios quedan en Corporativo.
 IF DB_NAME() NOT IN (N'WideWorldImporters_Corporativo', N'WideWorldImporters_SanJose', N'WideWorldImporters_Limon')
     THROW 51004, 'Conecte a una de las tres bases del Proyecto 2.', 1;
 GO
