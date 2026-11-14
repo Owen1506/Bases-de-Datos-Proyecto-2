@@ -1,13 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { consultar } from '../../api';
 import { formatoMonto } from '../../formato';
+import Buscador from '../../components/Buscador';
 import Paginacion from '../../components/Paginacion';
+import SelectorSucursal from '../../components/SelectorSucursal';
 
 const TAMANO_PAGINA = 10;
 
 function ReporteComprasProveedores({ alVolver }) {
+  const [sucursal, setSucursal] = useState('');
   const [categoria, setCategoria] = useState('');
   const [nombreProveedor, setNombreProveedor] = useState('');
+  const [categorias, setCategorias] = useState([]);
+  // cambia al restaurar los filtros, para vaciar el buscador de nombre
+  const [reinicios, setReinicios] = useState(0);
   const [filas, setFilas] = useState([]);
   const [pagina, setPagina] = useState(1);
   const [total, setTotal] = useState(0);
@@ -20,6 +26,7 @@ function ReporteComprasProveedores({ alVolver }) {
     const solicitud = ++solicitudActual.current;
     const parametros = new URLSearchParams();
     parametros.set('pagina', numeroPagina);
+    if (filtros.sucursal) parametros.set('sucursal', filtros.sucursal);
     if (filtros.categoria?.trim()) parametros.set('categoria', filtros.categoria.trim());
     if (filtros.nombreProveedor?.trim()) parametros.set('nombreProveedor', filtros.nombreProveedor.trim());
 
@@ -45,18 +52,22 @@ function ReporteComprasProveedores({ alVolver }) {
   }
 
   useEffect(() => {
+    // si falla, la lista de categorías queda vacía y el reporte funciona igual
+    consultar('/catalogos/categorias-proveedor').then(setCategorias).catch(() => setCategorias([]));
     buscar();
     return () => { solicitudActual.current += 1; };
   }, []);
 
   function alBuscar(evento) {
     evento.preventDefault();
-    buscar({ categoria, nombreProveedor });
+    buscar({ sucursal, categoria, nombreProveedor });
   }
 
   function restaurar() {
+    setSucursal('');
     setCategoria('');
     setNombreProveedor('');
+    setReinicios(reinicios + 1);
     buscar();
   }
 
@@ -72,18 +83,27 @@ function ReporteComprasProveedores({ alVolver }) {
       <div className="modulo-columnas">
         <form className="panel panel-filtros" onSubmit={alBuscar}>
           <h3>Filtros del reporte</h3>
+          <SelectorSucursal valor={sucursal} alCambiar={setSucursal} />
           <label>
             Categoría del proveedor
-            <input type="text" value={categoria} maxLength={100}
-              placeholder="Escriba parte de la categoría"
-              onChange={(e) => setCategoria(e.target.value)} />
+            <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+              <option value="">Todas</option>
+              {categorias.map((c) => (
+                <option key={c.CategoriaID} value={c.Categoria}>{c.Categoria}</option>
+              ))}
+            </select>
           </label>
-          <label>
-            Nombre del proveedor
-            <input type="text" value={nombreProveedor} maxLength={100}
-              placeholder="Escriba parte del nombre"
-              onChange={(e) => setNombreProveedor(e.target.value)} />
-          </label>
+          {/* Texto libre con sugerencias: no hace falta elegir una, se busca con lo escrito */}
+          <Buscador
+            key={reinicios}
+            etiqueta="Nombre del proveedor"
+            ruta="/catalogos/proveedores"
+            campoId="ProveedorID"
+            campoTexto="Proveedor"
+            textoInicial=""
+            placeholder="Escriba parte del nombre"
+            alElegir={(id, texto) => setNombreProveedor(texto)}
+          />
           <button className="boton" type="submit" disabled={cargando}>Consultar</button>
           <button className="boton secundario" type="button" onClick={restaurar} disabled={cargando}>
             Restaurar filtros
