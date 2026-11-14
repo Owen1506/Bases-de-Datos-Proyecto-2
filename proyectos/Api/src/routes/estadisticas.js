@@ -1,7 +1,21 @@
 const express = require('express');
-const { ejecutarSP } = require('../db');
+const { ejecutarSPCorporativo } = require('../dbNodos');
 
+// Las estadísticas se leen de las vistas materializadas de Corporativo
 const router = express.Router();
+
+// Filtro de todos los reportes: vacío = consolidado, 1 = San José, 2 = Limón
+router.use((req, res, next) => {
+  const { sucursal } = req.query;
+  if (sucursal !== undefined && !['', '1', '2'].includes(sucursal)) {
+    return res.status(400).json({ mensaje: 'Seleccione una sucursal válida.' });
+  }
+  next();
+});
+
+function sucursalId(req) {
+  return req.query.sucursal ? Number(req.query.sucursal) : null;
+}
 
 function textoValido(valor) {
   return valor === undefined || (typeof valor === 'string' && valor.length <= 100);
@@ -29,7 +43,8 @@ router.get('/compras-proveedores', async (req, res) => {
     return res.status(400).json({ mensaje: 'La página debe ser un número entero mayor que cero.' });
   }
 
-  const filas = await ejecutarSP('dbo.usp_Reporte_ComprasProveedores', {
+  const filas = await ejecutarSPCorporativo('dbo.usp_Reporte_ComprasProveedores', {
+    SucursalID: sucursalId(req),
     Categoria: categoria?.trim() || null,
     NombreProveedor: nombreProveedor?.trim() || null,
     Pagina: Number(pagina || 1)
@@ -39,11 +54,11 @@ router.get('/compras-proveedores', async (req, res) => {
 });
 
 router.get('/anios-facturas', async (req, res) => {
-  res.json(await ejecutarSP('dbo.usp_Reporte_AniosFacturas'));
+  res.json(await ejecutarSPCorporativo('dbo.usp_Reporte_AniosFacturas', { SucursalID: sucursalId(req) }));
 });
 
 router.get('/anios-ordenes-compra', async (req, res) => {
-  res.json(await ejecutarSP('dbo.usp_Reporte_AniosOrdenesCompra'));
+  res.json(await ejecutarSPCorporativo('dbo.usp_Reporte_AniosOrdenesCompra', { SucursalID: sucursalId(req) }));
 });
 
 router.get('/ventas-clientes', async (req, res) => {
@@ -55,7 +70,8 @@ router.get('/ventas-clientes', async (req, res) => {
     return res.status(400).json({ mensaje: 'La página debe ser un número entero mayor que cero.' });
   }
 
-  res.json(await ejecutarSP('dbo.usp_Reporte_VentasClientes', {
+  res.json(await ejecutarSPCorporativo('dbo.usp_Reporte_VentasClientes', {
+    SucursalID: sucursalId(req),
     NombreCliente: nombreCliente?.trim() || null,
     Categoria: categoria?.trim() || null,
     Pagina: Number(pagina || 1)
@@ -71,7 +87,8 @@ router.get('/top-productos-ganancia', async (req, res) => {
     return res.status(400).json({ mensaje: 'La página debe ser un número entero mayor que cero.' });
   }
 
-  res.json(await ejecutarSP('dbo.usp_Reporte_TopProductosGanancia', {
+  res.json(await ejecutarSPCorporativo('dbo.usp_Reporte_TopProductosGanancia', {
+    SucursalID: sucursalId(req),
     Anio: anio === undefined ? null : Number(anio),
     Pagina: Number(pagina || 1)
   }));
@@ -89,7 +106,8 @@ router.get('/top-clientes-facturas', async (req, res) => {
     return res.status(400).json({ mensaje: 'El año inicial debe ser menor o igual que el año final.' });
   }
 
-  res.json(await ejecutarSP('dbo.usp_Reporte_TopClientesFacturas', {
+  res.json(await ejecutarSPCorporativo('dbo.usp_Reporte_TopClientesFacturas', {
+    SucursalID: sucursalId(req),
     AnioInicio: anioInicio === undefined ? null : Number(anioInicio),
     AnioFin: anioFin === undefined ? null : Number(anioFin),
     Pagina: Number(pagina || 1)
@@ -108,7 +126,8 @@ router.get('/top-proveedores-ordenes', async (req, res) => {
     return res.status(400).json({ mensaje: 'El año inicial debe ser menor o igual que el año final.' });
   }
 
-  res.json(await ejecutarSP('dbo.usp_Reporte_TopProveedoresOrdenes', {
+  res.json(await ejecutarSPCorporativo('dbo.usp_Reporte_TopProveedoresOrdenes', {
+    SucursalID: sucursalId(req),
     AnioInicio: anioInicio === undefined ? null : Number(anioInicio),
     AnioFin: anioFin === undefined ? null : Number(anioFin),
     Pagina: Number(pagina || 1)
