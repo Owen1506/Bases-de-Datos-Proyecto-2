@@ -35,6 +35,31 @@ EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'Colors',
     @source_owner = N'Warehouse', @source_object = N'Colors', @destination_owner = N'Warehouse';
 EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'PackageTypes',
     @source_owner = N'Warehouse', @source_object = N'PackageTypes', @destination_owner = N'Warehouse';
+
+-- Version solo existe en Corporativo (concurrencia), no se envía a las sucursales
+EXEC sp_articlecolumn @publication = N'Pub_Catalogo', @article = N'StockItems',
+    @column = N'Version', @operation = N'drop';
+GO
+
+-- Artículos: clientes, proveedores y vendedores (solo la parte pública) y sus tablas de referencia
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'SupplierCategories',
+    @source_owner = N'Purchasing', @source_object = N'SupplierCategories', @destination_owner = N'Purchasing';
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'Customers',
+    @source_owner = N'Sales', @source_object = N'Customers', @destination_owner = N'Sales';
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'CustomerCategories',
+    @source_owner = N'Sales', @source_object = N'CustomerCategories', @destination_owner = N'Sales';
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'BuyingGroups',
+    @source_owner = N'Sales', @source_object = N'BuyingGroups', @destination_owner = N'Sales';
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'People',
+    @source_owner = N'Application', @source_object = N'People', @destination_owner = N'Application';
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'DeliveryMethods',
+    @source_owner = N'Application', @source_object = N'DeliveryMethods', @destination_owner = N'Application';
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'Countries',
+    @source_owner = N'Application', @source_object = N'Countries', @destination_owner = N'Application';
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'StateProvinces',
+    @source_owner = N'Application', @source_object = N'StateProvinces', @destination_owner = N'Application';
+EXEC sp_addarticle @publication = N'Pub_Catalogo', @article = N'Cities',
+    @source_owner = N'Application', @source_object = N'Cities', @destination_owner = N'Application';
 GO
 
 EXEC sp_addsubscription

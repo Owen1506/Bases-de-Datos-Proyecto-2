@@ -56,67 +56,35 @@ SELECT StockItemID, StockItemName, UnitPrice FROM Warehouse.StockItems WHERE Sto
 GO
 
 
--- 2. Facturas: San José -> Corporativo
+-- 2. Inventario: San José -> Corporativo
 
--- San José: insertar
+-- San José: ver la cantidad actual del producto 1 y cambiarla
 USE WideWorldImporters_SanJose;
-INSERT INTO dbo.PruebaFacturas (SucursalID, FacturaID, Cliente, Monto) VALUES (1, 1, N'Cliente de prueba', 100.00);
+SELECT StockItemID, QuantityOnHand, BinLocation FROM Warehouse.StockItemHoldings WHERE StockItemID = 1;
+EXEC dbo.usp_Existencias_Actualizar @ProductoID = 1, @CantidadDisponible = 500, @Ubicacion = N'SJ-1';
 GO
 
--- Corporativo: verificar (debe aparecer)
+-- Corporativo: verificar (la fila de San José dice 500 y SJ-1, la de Limón no cambia)
 USE WideWorldImporters_Corporativo;
-SELECT SucursalID, FacturaID, Cliente, Monto FROM dbo.PruebaFacturas;
+SELECT SucursalID, StockItemID, QuantityOnHand, BinLocation FROM Warehouse.StockItemHoldings WHERE StockItemID = 1;
 GO
 
--- Limón: verificar (no debe aparecer)
+-- Limón: verificar (su cantidad no cambia)
 USE WideWorldImporters_Limon;
-SELECT SucursalID, FacturaID, Cliente, Monto FROM dbo.PruebaFacturas;
+SELECT StockItemID, QuantityOnHand, BinLocation FROM Warehouse.StockItemHoldings WHERE StockItemID = 1;
 GO
 
--- San José: actualizar
+-- San José: restaurar (87805 es la cantidad de la carga inicial)
 USE WideWorldImporters_SanJose;
-UPDATE dbo.PruebaFacturas SET Monto = 150.00 WHERE SucursalID = 1 AND FacturaID = 1;
+EXEC dbo.usp_Existencias_Actualizar @ProductoID = 1, @CantidadDisponible = 87805, @Ubicacion = NULL;
 GO
 
--- Corporativo: verificar (monto 150.00)
+
+-- 3. Total de la empresa: Corporativo suma las dos sucursales
+
 USE WideWorldImporters_Corporativo;
-SELECT SucursalID, FacturaID, Cliente, Monto FROM dbo.PruebaFacturas;
-GO
-
--- San José: borrar
-USE WideWorldImporters_SanJose;
-DELETE FROM dbo.PruebaFacturas WHERE SucursalID = 1 AND FacturaID = 1;
-GO
-
--- Corporativo: verificar (sin filas)
-USE WideWorldImporters_Corporativo;
-SELECT SucursalID, FacturaID, Cliente, Monto FROM dbo.PruebaFacturas;
-GO
-
-
--- 3. Misma factura número 1 en las dos sucursales
-
--- San José: insertar
-USE WideWorldImporters_SanJose;
-INSERT INTO dbo.PruebaFacturas (SucursalID, FacturaID, Cliente, Monto) VALUES (1, 1, N'Cliente de San José', 100.00);
-GO
-
--- Limón: insertar
-USE WideWorldImporters_Limon;
-INSERT INTO dbo.PruebaFacturas (SucursalID, FacturaID, Cliente, Monto) VALUES (2, 1, N'Cliente de Limón', 200.00);
-GO
-
--- Corporativo: verificar (deben aparecer las dos, la clave es sucursal + número)
-USE WideWorldImporters_Corporativo;
-SELECT SucursalID, FacturaID, Cliente, Monto FROM dbo.PruebaFacturas;
-GO
-
--- San José: limpiar
-USE WideWorldImporters_SanJose;
-DELETE FROM dbo.PruebaFacturas;
-GO
-
--- Limón: limpiar
-USE WideWorldImporters_Limon;
-DELETE FROM dbo.PruebaFacturas;
+SELECT StockItemID, SUM(QuantityOnHand) AS TotalEmpresa
+FROM Warehouse.StockItemHoldings
+WHERE StockItemID = 1
+GROUP BY StockItemID;
 GO

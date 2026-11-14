@@ -1,4 +1,5 @@
--- Paso 5 (Limón): publicar PruebaFacturas hacia Corporativo.
+-- Paso 5 (Limón): publicar facturas, órdenes e inventario hacia Corporativo.
+-- Sin instantánea inicial: la carga de datos deja las copias de Corporativo iguales a la sucursal.
 USE WideWorldImporters_Limon;
 GO
 
@@ -21,9 +22,19 @@ EXEC sp_addpublication
     @replicate_ddl = 0;
 GO
 
-EXEC sp_addarticle @publication = N'Pub_Limon', @article = N'PruebaFacturas',
-    @source_owner = N'dbo', @source_object = N'PruebaFacturas',
-    @destination_owner = N'dbo';
+EXEC sp_addarticle @publication = N'Pub_Limon', @article = N'Invoices',
+    @source_owner = N'Sales', @source_object = N'Invoices', @destination_owner = N'Sales';
+EXEC sp_addarticle @publication = N'Pub_Limon', @article = N'InvoiceLines',
+    @source_owner = N'Sales', @source_object = N'InvoiceLines', @destination_owner = N'Sales';
+EXEC sp_addarticle @publication = N'Pub_Limon', @article = N'PurchaseOrders',
+    @source_owner = N'Purchasing', @source_object = N'PurchaseOrders', @destination_owner = N'Purchasing';
+EXEC sp_addarticle @publication = N'Pub_Limon', @article = N'PurchaseOrderLines',
+    @source_owner = N'Purchasing', @source_object = N'PurchaseOrderLines', @destination_owner = N'Purchasing';
+
+-- Inventario: los borrados no se envían, en Corporativo ya se borran en cascada con el producto
+EXEC sp_addarticle @publication = N'Pub_Limon', @article = N'StockItemHoldings',
+    @source_owner = N'Warehouse', @source_object = N'StockItemHoldings', @destination_owner = N'Warehouse',
+    @del_cmd = N'NONE';
 GO
 
 EXEC sp_addsubscription
