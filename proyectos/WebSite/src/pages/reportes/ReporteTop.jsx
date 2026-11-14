@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { consultar } from '../../api';
 import { formatoMonto } from '../../formato';
 import Paginacion from '../../components/Paginacion';
+import SelectorSucursal from '../../components/SelectorSucursal';
 
 const TAMANO_PAGINA = 10;
 
 function ReporteTop({ tipo, alVolver }) {
   const esProductos = tipo === 'productos';
   const esProveedores = tipo === 'proveedores';
+  const [sucursal, setSucursal] = useState('');
   const [anios, setAnios] = useState([]);
   const [anio, setAnio] = useState('');
   const [anioInicio, setAnioInicio] = useState('');
@@ -25,6 +27,7 @@ function ReporteTop({ tipo, alVolver }) {
     const solicitud = ++solicitudActual.current;
     const parametros = new URLSearchParams();
     parametros.set('pagina', numeroPagina);
+    if (filtros.sucursal) parametros.set('sucursal', filtros.sucursal);
     if (filtros.anio) parametros.set('anio', filtros.anio);
     if (filtros.anioInicio) parametros.set('anioInicio', filtros.anioInicio);
     if (filtros.anioFin) parametros.set('anioFin', filtros.anioFin);
@@ -67,10 +70,11 @@ function ReporteTop({ tipo, alVolver }) {
       setError('El año inicial debe ser menor o igual que el año final.');
       return;
     }
-    buscar(esProductos ? { anio } : { anioInicio, anioFin });
+    buscar(esProductos ? { sucursal, anio } : { sucursal, anioInicio, anioFin });
   }
 
   function restaurar() {
+    setSucursal('');
     setAnio('');
     setAnioInicio('');
     setAnioFin('');
@@ -101,6 +105,7 @@ function ReporteTop({ tipo, alVolver }) {
         <form className="panel panel-filtros" onSubmit={alBuscar}>
           <h3>Filtros del reporte</h3>
           {errorAnios && <div className="mensaje error" role="alert">{errorAnios}</div>}
+          <SelectorSucursal valor={sucursal} alCambiar={setSucursal} />
           {esProductos ? (
             <label>
               Año de facturación

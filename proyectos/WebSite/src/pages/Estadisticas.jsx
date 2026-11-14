@@ -38,7 +38,7 @@ function Estadisticas() {
   return (
     <>
       <h2>Estadísticas</h2>
-      <p className="descripcion">Seleccione un reporte para consultar sus datos.</p>
+      <p className="descripcion">Seleccione un reporte para consultar sus datos. Cada reporte se puede ver por sucursal o consolidado.</p>
       <div className="catalogo-reportes">
         {REPORTES.map((reporte) => (
           COMPONENTES[reporte.id] ? (
