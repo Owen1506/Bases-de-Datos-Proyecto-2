@@ -74,10 +74,10 @@ Ejecutar los archivos en este orden en `localhost,1436`:
 
 1. [`Corporativo/01_crear_bd.sql`](Corporativo/01_crear_bd.sql): crear la base si falta.
 2. [`Corporativo/02_usuarios.sql`](Corporativo/02_usuarios.sql): crear `dbo.Usuarios` si falta, con los roles `Administrador` y `Corporativo` y la asignación de sucursal.
-3. [`Corporativo/03_seguridad_usuarios.template.sql`](Corporativo/03_seguridad_usuarios.template.sql): en una instalación nueva, copiar a un archivo `.local.sql`, reemplazar la contraseña de ejemplo y ejecutar la copia para crear la clave maestra, el certificado y la clave simétrica AES-256. Si ya existen, omitir este paso.
+3. [`Corporativo/03_seguridad_usuarios.template.sql`](Corporativo/03_seguridad_usuarios.template.sql): en una instalación nueva, copiar a un archivo `.local.sql`, reemplazar la contraseña de ejemplo y ejecutar la copia para crear la clave maestra, el certificado y la clave simétrica AES-256. Si ya existen, no repetirlo.
 4. [`Corporativo/04_usuarios_prueba.template.sql`](Corporativo/04_usuarios_prueba.template.sql): copiar a un archivo `.local.sql`, sustituir los tres marcadores por hashes scrypt válidos generados con Node.js y ejecutar la copia. El formato que espera la API es `scrypt$<sal de 16 bytes en hexadecimal>$<hash de 64 bytes en hexadecimal>`. El script evita insertar un usuario cuyo `username` ya exista.
 5. [`Corporativo/05_verificar_usuarios.sql`](Corporativo/05_verificar_usuarios.sql): consultar usuarios, certificado, claves y formato de los hashes descifrados. El resultado `CORRECTO` verifica el formato y el descifrado, pero no prueba una contraseña concreta.
 
 Los archivos `.local.sql` están excluidos de Git. No publicar las contraseñas de los usuarios, los hashes reales ni la contraseña de la clave maestra. Conservar respaldos seguros de la clave maestra y del certificado con su clave privada para poder recuperar los datos cifrados.
 
-La API usa `MSSQL_CORPORATIVO_PASSWORD` en el `.env` de la raíz para conectarse a Corporativo. Es la misma variable que usa docker compose para la contraseña de `sa` del contenedor Corporativo. El login web consulta la API; las demás rutas y permisos de SQL Server requieren una etapa posterior de autorización.
+La API usa `MSSQL_CORPORATIVO_PASSWORD` en el `.env` de la raíz para conectarse a Corporativo. Es la misma variable que usa docker compose para la contraseña de `sa` del contenedor Corporativo. El login web consulta la API; las demás rutas y permisos de SQL Server aún requieren configurar autorización.
