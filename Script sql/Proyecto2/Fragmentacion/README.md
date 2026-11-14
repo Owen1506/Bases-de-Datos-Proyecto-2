@@ -1,23 +1,25 @@
-# Fragmentación: productos e inventario
+# Fragmentación: productos e inventario con nombres de WWI
 
 ## Asignación
 
 | Fragmento | Corporativo | San José | Limón | Regla |
 |---|---|---|---|---|
-| `catalogo.Productos` | Principal | Copia | Copia | Un `ProductoID` y los mismos atributos de catálogo en los tres nodos. |
-| `catalogo.ProductoGrupos` | Principal | Copia | Copia | Misma relación producto-grupo en los tres nodos. |
-| `inventario.Existencias` | No | Propia | Propia | Una fila por producto y sucursal; cantidad y ubicación locales. |
+| `Warehouse.StockItems` | Principal | Copia | Copia | Un `StockItemID` y los mismos atributos de catálogo en los tres nodos. |
+| `Warehouse.StockItemStockGroups` | Principal | Copia | Copia | Misma relación producto-grupo en los tres nodos. |
+| `Warehouse.StockItemHoldings` | No | Propia | Propia | Una fila por producto y sucursal; cantidad y ubicación locales. |
 
 El catálogo se duplica para consultar y vender productos localmente. Las existencias se fragmentan horizontalmente por sucursal para que una venta o ajuste en San José no altere la cantidad de Limón. El total empresarial se calcula sumando ambas existencias; no se almacena como una tercera cantidad.
 
-`ProductoID` se asigna una sola vez y se conserva en las copias. No se usa `IDENTITY` en estas tablas: esto permite importar los identificadores de `Warehouse.StockItems` y evita que cada nodo genere el mismo ID para productos diferentes. La escritura del catálogo debe coordinarse en un solo nodo antes de publicar sus cambios; la decisión de API y la publicación quedan para entregables posteriores.
+`StockItemID` se asigna una sola vez y se conserva en las copias. No se usa `IDENTITY` en estas tablas: esto permite importar los identificadores de `Warehouse.StockItems` y evita que cada nodo genere el mismo ID para productos diferentes. Las tablas físicas conservan nombres y columnas de WWI, pero solo las columnas que necesita este módulo; no son copias del esquema temporal completo. El catálogo se escribe en Corporativo y se replica a las sucursales.
+
+Los SP conservan parámetros y resultados en español para la API actual. Sus consultas y escrituras usan las columnas WWI mediante `syn.*`. `Warehouse.StockItemHoldings` permite `NULL` en ubicación y datos de conteo/costo porque la carga inicial no dispone de valores propios de cada sucursal.
 
 ## Scripts
 
 1. Crear las bases con los scripts `../Corporativo/01_crear_bd.sql`, `../SanJose/01_crear_bd.sql` y `../Limon/01_crear_bd.sql`.
 2. Ejecutar `01_catalogo_productos.sql` una vez en **cada** base nueva.
 3. Ejecutar `02_existencias_sucursal.sql` **solo** en San José y Limón.
-4. Ejecutar `03_verificar_estructura.sql` en cada base. En Corporativo debe indicar que no hay tabla de existencias; en cada sucursal debe indicar que sí existe.
+4. Ejecutar `03_verificar_estructura.sql` en cada base. En Corporativo debe indicar que no hay `Warehouse.StockItemHoldings`; en cada sucursal debe indicar que sí existe.
 
 Los scripts de estructura son repetibles: crean los objetos que faltan y no borran datos. No cambian los procedimientos del Proyecto 1 ni crean publicaciones o suscripciones. No insertar datos de prueba en estas tablas antes de la carga inicial.
 
@@ -42,7 +44,7 @@ La carga se hace en una transacción por nodo. Si un nodo ya tiene exactamente l
 
 ## Catálogos de referencia del producto
 
-`catalogo.ProveedoresBasicos` (ID y nombre), `catalogo.GruposProducto`, `catalogo.Colores` y `catalogo.TiposEmpaque`. Estos IDs permiten interpretar los campos `ProveedorID`, `ColorID`, `UnidadEmpaqueID`, `EmpaqueExteriorID` y `GrupoID` de los productos. Los contactos, direcciones, teléfonos y datos bancarios de proveedores **no** se exportan a las sucursales.
+`Purchasing.Suppliers` (solo `SupplierID` y `SupplierName` por ahora), `Warehouse.StockGroups`, `Warehouse.Colors` y `Warehouse.PackageTypes`. Estos IDs permiten interpretar `SupplierID`, `ColorID`, `UnitPackageID`, `OuterPackageID` y `StockGroupID`. Los contactos, direcciones, teléfonos y datos bancarios de proveedores **no** se exportan a las sucursales.
 
 Después de completar la carga inicial de productos anterior:
 
@@ -63,8 +65,8 @@ El exportador guarda `backups/fragmentacion/catalogos_referencia.json` sin reemp
 
 | Origen | Destino | Nota |
 |---|---|---|
-| `Warehouse.StockItems` | `catalogo.Productos` | Atributos que usa el formulario actual. |
-| `Warehouse.StockItemStockGroups` | `catalogo.ProductoGrupos` | Relación entre productos y grupos. |
-| `Warehouse.StockItemHoldings` | `inventario.Existencias` | Cargar por sucursal; la base original no distingue San José de Limón. |
+| `Warehouse.StockItems` | `Warehouse.StockItems` | Atributos que usa el formulario actual. |
+| `Warehouse.StockItemStockGroups` | `Warehouse.StockItemStockGroups` | Relación entre productos y grupos. |
+| `Warehouse.StockItemHoldings` | `Warehouse.StockItemHoldings` | Cargar por sucursal; la base original no distingue San José de Limón. |
 
 Quedan pendientes los fragmentos completos de clientes y proveedores (con datos sensibles solo en Corporativo), las facturas propias de cada sucursal y la conexión de la API con estos nodos.

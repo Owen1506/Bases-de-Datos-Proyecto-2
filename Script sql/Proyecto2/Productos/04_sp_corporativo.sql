@@ -12,29 +12,29 @@ BEGIN
     SET NOCOUNT ON;
 
     SELECT
-        p.ProductoID,
-        p.Nombre,
-        p.ProveedorID,
+        p.StockItemID AS ProductoID,
+        p.StockItemName AS Nombre,
+        p.SupplierID AS ProveedorID,
         p.ColorID,
-        p.UnidadEmpaqueID,
-        p.EmpaqueExteriorID,
-        p.CantidadPorEmpaque AS CantidadEmpaquetamiento,
-        p.Marca,
-        p.Tamano,
-        p.Impuesto,
-        p.PrecioUnitario,
-        p.PrecioVenta,
-        p.Peso,
-        p.DiasEntrega,
-        p.EsRefrigerado,
-        p.CodigoBarras,
-        p.ComentariosMarketing,
-        (SELECT STRING_AGG(CAST(g.GrupoID AS VARCHAR(10)), ',')
+        p.UnitPackageID AS UnidadEmpaqueID,
+        p.OuterPackageID AS EmpaqueExteriorID,
+        p.QuantityPerOuter AS CantidadEmpaquetamiento,
+        p.Brand AS Marca,
+        p.Size AS Tamano,
+        p.TaxRate AS Impuesto,
+        p.UnitPrice AS PrecioUnitario,
+        p.RecommendedRetailPrice AS PrecioVenta,
+        p.TypicalWeightPerUnit AS Peso,
+        p.LeadTimeDays AS DiasEntrega,
+        p.IsChillerStock AS EsRefrigerado,
+        p.Barcode AS CodigoBarras,
+        p.MarketingComments AS ComentariosMarketing,
+        (SELECT STRING_AGG(CAST(g.StockGroupID AS VARCHAR(10)), ',')
          FROM syn.ProductoGrupos g
-         WHERE g.ProductoID = p.ProductoID) AS GruposIDs,
+         WHERE g.StockItemID = p.StockItemID) AS GruposIDs,
         CAST(p.Version AS BIGINT) AS Version
     FROM syn.Productos p
-    WHERE p.ProductoID = @ProductoID;
+    WHERE p.StockItemID = @ProductoID;
 END;
 GO
 
@@ -76,25 +76,25 @@ BEGIN
            OR EXISTS (
                SELECT 1
                FROM @ListaGrupos l
-               LEFT JOIN syn.GruposProducto g ON g.GrupoID = l.GrupoID
-               WHERE g.GrupoID IS NULL
+               LEFT JOIN syn.GruposProducto g ON g.StockGroupID = l.GrupoID
+               WHERE g.StockGroupID IS NULL
            )
             THROW 50004, 'Debe elegir al menos un grupo válido.', 1;
 
-        IF NOT EXISTS (SELECT 1 FROM syn.ProveedoresBasicos WHERE ProveedorID = @ProveedorID)
-           OR NOT EXISTS (SELECT 1 FROM syn.TiposEmpaque WHERE TipoEmpaqueID = @UnidadEmpaqueID)
-           OR NOT EXISTS (SELECT 1 FROM syn.TiposEmpaque WHERE TipoEmpaqueID = @EmpaqueExteriorID)
+        IF NOT EXISTS (SELECT 1 FROM syn.ProveedoresBasicos WHERE SupplierID = @ProveedorID)
+           OR NOT EXISTS (SELECT 1 FROM syn.TiposEmpaque WHERE PackageTypeID = @UnidadEmpaqueID)
+           OR NOT EXISTS (SELECT 1 FROM syn.TiposEmpaque WHERE PackageTypeID = @EmpaqueExteriorID)
            OR (@ColorID IS NOT NULL AND NOT EXISTS (SELECT 1 FROM syn.Colores WHERE ColorID = @ColorID))
             THROW 50005, 'El proveedor, el color o el empaque indicado no existe.', 1;
 
         -- Nuevo ID; UPDLOCK y HOLDLOCK evitan que dos inserciones a la vez obtengan el mismo
-        SELECT @ProductoID = COALESCE(MAX(ProductoID), 0) + 1
+        SELECT @ProductoID = COALESCE(MAX(StockItemID), 0) + 1
         FROM syn.Productos WITH (UPDLOCK, HOLDLOCK);
 
         INSERT INTO syn.Productos (
-            ProductoID, Nombre, ProveedorID, ColorID, UnidadEmpaqueID, EmpaqueExteriorID,
-            Marca, Tamano, DiasEntrega, CantidadPorEmpaque, EsRefrigerado, CodigoBarras,
-            Impuesto, PrecioUnitario, PrecioVenta, Peso, ComentariosMarketing
+            StockItemID, StockItemName, SupplierID, ColorID, UnitPackageID, OuterPackageID,
+            Brand, Size, LeadTimeDays, QuantityPerOuter, IsChillerStock, Barcode,
+            TaxRate, UnitPrice, RecommendedRetailPrice, TypicalWeightPerUnit, MarketingComments
         )
         VALUES (
             @ProductoID, @Nombre, @ProveedorID, @ColorID, @UnidadEmpaqueID, @EmpaqueExteriorID,
@@ -102,7 +102,7 @@ BEGIN
             @Impuesto, @PrecioUnitario, @PrecioVenta, @Peso, @ComentariosMarketing
         );
 
-        INSERT INTO syn.ProductoGrupos (ProductoID, GrupoID)
+        INSERT INTO syn.ProductoGrupos (StockItemID, StockGroupID)
         SELECT @ProductoID, GrupoID
         FROM @ListaGrupos;
 
@@ -155,7 +155,7 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
 
-        IF NOT EXISTS (SELECT 1 FROM syn.Productos WHERE ProductoID = @ProductoID)
+        IF NOT EXISTS (SELECT 1 FROM syn.Productos WHERE StockItemID = @ProductoID)
             THROW 50001, 'El producto indicado no existe.', 1;
 
         INSERT INTO @ListaGrupos (GrupoID)
@@ -166,37 +166,37 @@ BEGIN
            OR EXISTS (
                SELECT 1
                FROM @ListaGrupos l
-               LEFT JOIN syn.GruposProducto g ON g.GrupoID = l.GrupoID
-               WHERE g.GrupoID IS NULL
+               LEFT JOIN syn.GruposProducto g ON g.StockGroupID = l.GrupoID
+               WHERE g.StockGroupID IS NULL
            )
             THROW 50004, 'Debe elegir al menos un grupo válido.', 1;
 
-        IF NOT EXISTS (SELECT 1 FROM syn.ProveedoresBasicos WHERE ProveedorID = @ProveedorID)
-           OR NOT EXISTS (SELECT 1 FROM syn.TiposEmpaque WHERE TipoEmpaqueID = @UnidadEmpaqueID)
-           OR NOT EXISTS (SELECT 1 FROM syn.TiposEmpaque WHERE TipoEmpaqueID = @EmpaqueExteriorID)
+        IF NOT EXISTS (SELECT 1 FROM syn.ProveedoresBasicos WHERE SupplierID = @ProveedorID)
+           OR NOT EXISTS (SELECT 1 FROM syn.TiposEmpaque WHERE PackageTypeID = @UnidadEmpaqueID)
+           OR NOT EXISTS (SELECT 1 FROM syn.TiposEmpaque WHERE PackageTypeID = @EmpaqueExteriorID)
            OR (@ColorID IS NOT NULL AND NOT EXISTS (SELECT 1 FROM syn.Colores WHERE ColorID = @ColorID))
             THROW 50005, 'El proveedor, el color o el empaque indicado no existe.', 1;
 
         -- Solo se actualiza si nadie lo modificó desde que se leyó
         UPDATE syn.Productos
         SET
-            Nombre = @Nombre,
-            ProveedorID = @ProveedorID,
+            StockItemName = @Nombre,
+            SupplierID = @ProveedorID,
             ColorID = @ColorID,
-            UnidadEmpaqueID = @UnidadEmpaqueID,
-            EmpaqueExteriorID = @EmpaqueExteriorID,
-            Marca = @Marca,
-            Tamano = @Tamano,
-            DiasEntrega = @DiasEntrega,
-            CantidadPorEmpaque = @CantidadEmpaquetamiento,
-            EsRefrigerado = @EsRefrigerado,
-            CodigoBarras = @CodigoBarras,
-            Impuesto = @Impuesto,
-            PrecioUnitario = @PrecioUnitario,
-            PrecioVenta = @PrecioVenta,
-            Peso = @Peso,
-            ComentariosMarketing = @ComentariosMarketing
-        WHERE ProductoID = @ProductoID
+            UnitPackageID = @UnidadEmpaqueID,
+            OuterPackageID = @EmpaqueExteriorID,
+            Brand = @Marca,
+            Size = @Tamano,
+            LeadTimeDays = @DiasEntrega,
+            QuantityPerOuter = @CantidadEmpaquetamiento,
+            IsChillerStock = @EsRefrigerado,
+            Barcode = @CodigoBarras,
+            TaxRate = @Impuesto,
+            UnitPrice = @PrecioUnitario,
+            RecommendedRetailPrice = @PrecioVenta,
+            TypicalWeightPerUnit = @Peso,
+            MarketingComments = @ComentariosMarketing
+        WHERE StockItemID = @ProductoID
           AND CAST(Version AS BIGINT) = @Version;
 
         IF @@ROWCOUNT = 0
@@ -204,9 +204,9 @@ BEGIN
 
         -- Se reemplazan los grupos por la lista completa que llegó
         DELETE FROM syn.ProductoGrupos
-        WHERE ProductoID = @ProductoID;
+        WHERE StockItemID = @ProductoID;
 
-        INSERT INTO syn.ProductoGrupos (ProductoID, GrupoID)
+        INSERT INTO syn.ProductoGrupos (StockItemID, StockGroupID)
         SELECT @ProductoID, GrupoID
         FROM @ListaGrupos;
 
@@ -236,11 +236,11 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
 
-        IF NOT EXISTS (SELECT 1 FROM syn.Productos WHERE ProductoID = @ProductoID)
+        IF NOT EXISTS (SELECT 1 FROM syn.Productos WHERE StockItemID = @ProductoID)
             THROW 50001, 'El producto indicado no existe.', 1;
 
         DELETE FROM syn.Productos
-        WHERE ProductoID = @ProductoID;
+        WHERE StockItemID = @ProductoID;
 
         COMMIT TRANSACTION;
     END TRY

@@ -4,6 +4,6 @@ IF DB_NAME() <> N'WideWorldImporters_Corporativo'
     THROW 51011, 'La versión de productos solo se agrega en Corporativo.', 1;
 GO
 
-IF COL_LENGTH(N'catalogo.Productos', N'Version') IS NULL
-    ALTER TABLE catalogo.Productos ADD Version ROWVERSION;
+IF COL_LENGTH(N'Warehouse.StockItems', N'Version') IS NULL
+    ALTER TABLE Warehouse.StockItems ADD Version ROWVERSION;
 GO

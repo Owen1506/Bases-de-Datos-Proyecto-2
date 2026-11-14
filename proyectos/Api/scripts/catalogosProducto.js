@@ -13,19 +13,19 @@ const nodos = [
 
 const catalogos = [
   {
-    clave: 'proveedores', tabla: 'ProveedoresBasicos', id: 'ProveedorID',
+    clave: 'proveedores', tabla: 'Purchasing.Suppliers', id: 'SupplierID', jsonId: 'ProveedorID', nombre: 'SupplierName',
     origen: 'Purchasing.Suppliers', columnaId: 'SupplierID', columnaNombre: 'SupplierName'
   },
   {
-    clave: 'grupos', tabla: 'GruposProducto', id: 'GrupoID',
+    clave: 'grupos', tabla: 'Warehouse.StockGroups', id: 'StockGroupID', jsonId: 'GrupoID', nombre: 'StockGroupName',
     origen: 'Warehouse.StockGroups', columnaId: 'StockGroupID', columnaNombre: 'StockGroupName'
   },
   {
-    clave: 'colores', tabla: 'Colores', id: 'ColorID',
+    clave: 'colores', tabla: 'Warehouse.Colors', id: 'ColorID', jsonId: 'ColorID', nombre: 'ColorName',
     origen: 'Warehouse.Colors', columnaId: 'ColorID', columnaNombre: 'ColorName'
   },
   {
-    clave: 'empaques', tabla: 'TiposEmpaque', id: 'TipoEmpaqueID',
+    clave: 'empaques', tabla: 'Warehouse.PackageTypes', id: 'PackageTypeID', jsonId: 'TipoEmpaqueID', nombre: 'PackageTypeName',
     origen: 'Warehouse.PackageTypes', columnaId: 'PackageTypeID', columnaNombre: 'PackageTypeName'
   }
 ];
@@ -46,11 +46,11 @@ function validar(datos) {
     if (!Array.isArray(filas) || filas.length === 0) throw new Error(`Falta el catálogo ${c.clave}.`);
     const ids = new Set();
     for (const fila of filas) {
-      if (!Number.isInteger(fila[c.id]) || ids.has(fila[c.id]) ||
+      if (!Number.isInteger(fila[c.jsonId]) || ids.has(fila[c.jsonId]) ||
           typeof fila.Nombre !== 'string' || !fila.Nombre.trim()) {
         throw new Error(`El catálogo ${c.clave} tiene IDs o nombres inválidos.`);
       }
-      ids.add(fila[c.id]);
+      ids.add(fila[c.jsonId]);
     }
   }
   return datos;
@@ -72,7 +72,7 @@ async function exportar() {
     const datos = { version: 1 };
     try {
       for (const c of catalogos) {
-        const consulta = `SELECT ${c.columnaId} AS ${c.id}, ${c.columnaNombre} AS Nombre
+        const consulta = `SELECT ${c.columnaId} AS ${c.jsonId}, ${c.columnaNombre} AS Nombre
           FROM ${c.origen} ORDER BY ${c.columnaId}`;
         datos[c.clave] = (await new sql.Request(tx).query(consulta)).recordset;
       }
@@ -89,8 +89,8 @@ async function exportar() {
 }
 
 async function revisarTablas(pool, nodo) {
-  const nombres = ['Productos', 'ProductoGrupos', ...catalogos.map(c => c.tabla)];
-  const campos = nombres.map(n => `OBJECT_ID(N'catalogo.${n}', N'U') AS ${n}`).join(', ');
+  const nombres = ['Warehouse.StockItems', 'Warehouse.StockItemStockGroups', ...catalogos.map(c => c.tabla)];
+  const campos = nombres.map((n, i) => `OBJECT_ID(N'${n}', N'U') AS Tabla${i}`).join(', ');
   const r = await pool.request().query(`SELECT ${campos}`);
   if (Object.values(r.recordset[0]).some(id => !id)) {
     throw new Error(`Faltan tablas de productos o referencias en ${nodo.nombre}. Ejecute 01 y 04.`);
@@ -99,18 +99,18 @@ async function revisarTablas(pool, nodo) {
 
 async function verificarReferencias(pool, nodo) {
   const r = await pool.request().query(`SELECT
-    (SELECT COUNT(*) FROM catalogo.Productos) AS Productos,
-    (SELECT COUNT(*) FROM catalogo.Productos p
-      LEFT JOIN catalogo.ProveedoresBasicos s ON s.ProveedorID = p.ProveedorID
-      LEFT JOIN catalogo.Colores c ON c.ColorID = p.ColorID
-      LEFT JOIN catalogo.TiposEmpaque u ON u.TipoEmpaqueID = p.UnidadEmpaqueID
-      LEFT JOIN catalogo.TiposEmpaque e ON e.TipoEmpaqueID = p.EmpaqueExteriorID
-      WHERE s.ProveedorID IS NULL
+    (SELECT COUNT(*) FROM Warehouse.StockItems) AS Productos,
+    (SELECT COUNT(*) FROM Warehouse.StockItems p
+      LEFT JOIN Purchasing.Suppliers s ON s.SupplierID = p.SupplierID
+      LEFT JOIN Warehouse.Colors c ON c.ColorID = p.ColorID
+      LEFT JOIN Warehouse.PackageTypes u ON u.PackageTypeID = p.UnitPackageID
+      LEFT JOIN Warehouse.PackageTypes e ON e.PackageTypeID = p.OuterPackageID
+      WHERE s.SupplierID IS NULL
          OR (p.ColorID IS NOT NULL AND c.ColorID IS NULL)
-         OR u.TipoEmpaqueID IS NULL OR e.TipoEmpaqueID IS NULL) AS ProductosInvalidos,
-    (SELECT COUNT(*) FROM catalogo.ProductoGrupos pg
-      LEFT JOIN catalogo.GruposProducto g ON g.GrupoID = pg.GrupoID
-      WHERE g.GrupoID IS NULL) AS GruposInvalidos`);
+         OR u.PackageTypeID IS NULL OR e.PackageTypeID IS NULL) AS ProductosInvalidos,
+    (SELECT COUNT(*) FROM Warehouse.StockItemStockGroups pg
+      LEFT JOIN Warehouse.StockGroups g ON g.StockGroupID = pg.StockGroupID
+      WHERE g.StockGroupID IS NULL) AS GruposInvalidos`);
   const { Productos, ProductosInvalidos, GruposInvalidos } = r.recordset[0];
   if (!Productos || ProductosInvalidos || GruposInvalidos) {
     throw new Error(`${nodo.nombre}: ${ProductosInvalidos} productos y ${GruposInvalidos} grupos con referencias inválidas, o faltan productos.`);
@@ -122,7 +122,7 @@ async function estadoNodo(nodo, datos) {
   try {
     await revisarTablas(pool, nodo);
     const cantidades = await Promise.all(catalogos.map(async c => {
-      const r = await pool.request().query(`SELECT COUNT(*) AS Total FROM catalogo.${c.tabla}`);
+      const r = await pool.request().query(`SELECT COUNT(*) AS Total FROM ${c.tabla}`);
       return r.recordset[0].Total;
     }));
     if (cantidades.every(n => n === 0)) return 'vacio';
@@ -138,13 +138,13 @@ async function cargarNodo(nodo, datos) {
     await tx.begin();
     try {
       for (const c of catalogos) {
-        const r = await new sql.Request(tx).query(`SELECT COUNT(*) AS Total FROM catalogo.${c.tabla}`);
+        const r = await new sql.Request(tx).query(`SELECT COUNT(*) AS Total FROM ${c.tabla}`);
         if (r.recordset[0].Total !== 0) throw new Error(`${nodo.nombre} ya tiene datos en ${c.tabla}.`);
         for (const fila of datos[c.clave]) {
           await new sql.Request(tx)
-            .input('Id', sql.Int, fila[c.id])
+            .input('Id', sql.Int, fila[c.jsonId])
             .input('Nombre', sql.NVarChar(100), fila.Nombre)
-            .query(`INSERT INTO catalogo.${c.tabla} (${c.id}, Nombre) VALUES (@Id, @Nombre)`);
+            .query(`INSERT INTO ${c.tabla} (${c.id}, ${c.nombre}) VALUES (@Id, @Nombre)`);
         }
       }
       await tx.commit();
@@ -158,7 +158,7 @@ async function cargarNodo(nodo, datos) {
 
 async function verificarNodoConPool(pool, nodo, datos) {
   for (const c of catalogos) {
-    const filas = (await pool.request().query(`SELECT ${c.id}, Nombre FROM catalogo.${c.tabla}
+    const filas = (await pool.request().query(`SELECT ${c.id} AS ${c.jsonId}, ${c.nombre} AS Nombre FROM ${c.tabla}
       ORDER BY ${c.id}`)).recordset;
     if (JSON.stringify(filas) !== JSON.stringify(datos[c.clave])) {
       throw new Error(`${nodo.nombre}: ${c.tabla} no coincide con el JSON de origen.`);

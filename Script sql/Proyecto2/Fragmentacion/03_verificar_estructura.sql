@@ -5,7 +5,7 @@ GO
 
 SELECT
     DB_NAME() AS Nodo,
-    CASE WHEN OBJECT_ID(N'catalogo.Productos', N'U') IS NOT NULL THEN 1 ELSE 0 END AS TieneProductos,
-    CASE WHEN OBJECT_ID(N'catalogo.ProductoGrupos', N'U') IS NOT NULL THEN 1 ELSE 0 END AS TieneProductoGrupos,
-    CASE WHEN OBJECT_ID(N'inventario.Existencias', N'U') IS NOT NULL THEN 1 ELSE 0 END AS TieneExistencias;
+    CASE WHEN OBJECT_ID(N'Warehouse.StockItems', N'U') IS NOT NULL THEN 1 ELSE 0 END AS TieneStockItems,
+    CASE WHEN OBJECT_ID(N'Warehouse.StockItemStockGroups', N'U') IS NOT NULL THEN 1 ELSE 0 END AS TieneStockItemStockGroups,
+    CASE WHEN OBJECT_ID(N'Warehouse.StockItemHoldings', N'U') IS NOT NULL THEN 1 ELSE 0 END AS TieneStockItemHoldings;
 GO

@@ -4,28 +4,28 @@ IF SCHEMA_ID(N'syn') IS NULL
 GO
 
 DROP SYNONYM IF EXISTS syn.Productos;
-CREATE SYNONYM syn.Productos FOR catalogo.Productos;
+CREATE SYNONYM syn.Productos FOR Warehouse.StockItems;
 
 DROP SYNONYM IF EXISTS syn.ProductoGrupos;
-CREATE SYNONYM syn.ProductoGrupos FOR catalogo.ProductoGrupos;
+CREATE SYNONYM syn.ProductoGrupos FOR Warehouse.StockItemStockGroups;
 
 DROP SYNONYM IF EXISTS syn.ProveedoresBasicos;
-CREATE SYNONYM syn.ProveedoresBasicos FOR catalogo.ProveedoresBasicos;
+CREATE SYNONYM syn.ProveedoresBasicos FOR Purchasing.Suppliers;
 
 DROP SYNONYM IF EXISTS syn.GruposProducto;
-CREATE SYNONYM syn.GruposProducto FOR catalogo.GruposProducto;
+CREATE SYNONYM syn.GruposProducto FOR Warehouse.StockGroups;
 
 DROP SYNONYM IF EXISTS syn.Colores;
-CREATE SYNONYM syn.Colores FOR catalogo.Colores;
+CREATE SYNONYM syn.Colores FOR Warehouse.Colors;
 
 DROP SYNONYM IF EXISTS syn.TiposEmpaque;
-CREATE SYNONYM syn.TiposEmpaque FOR catalogo.TiposEmpaque;
+CREATE SYNONYM syn.TiposEmpaque FOR Warehouse.PackageTypes;
 GO
 
 -- Solo en sucursales: inventario propio
 DROP SYNONYM IF EXISTS syn.Existencias;
-IF OBJECT_ID(N'inventario.Existencias', N'U') IS NOT NULL
-    CREATE SYNONYM syn.Existencias FOR inventario.Existencias;
+IF OBJECT_ID(N'Warehouse.StockItemHoldings', N'U') IS NOT NULL
+    CREATE SYNONYM syn.Existencias FOR Warehouse.StockItemHoldings;
 GO
 
 -- Verificar
