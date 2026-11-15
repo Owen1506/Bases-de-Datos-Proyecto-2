@@ -20,22 +20,11 @@ router.post('/login', async (req, res) => {
   }
 
   try {
-    const pool = await conectarCorporativo();
+    const pool = await conectarCorporativo('login');
 
     const resultado = await pool.request()
       .input('username', sql.VarChar(50), username.trim())
-      .query(`
-        OPEN SYMMETRIC KEY ClaveUsuarios
-        DECRYPTION BY CERTIFICATE CertificadoUsuarios;
-
-        SELECT
-          iduser, username, fullname, active, rol, SucursalID,
-          CONVERT(NVARCHAR(300), DecryptByKey([password])) AS hashGuardado
-        FROM dbo.Usuarios
-        WHERE username = @username;
-
-        CLOSE SYMMETRIC KEY ClaveUsuarios;
-      `);
+      .execute('dbo.usp_Api_Login');
 
     const usuario = resultado.recordset[0];
 

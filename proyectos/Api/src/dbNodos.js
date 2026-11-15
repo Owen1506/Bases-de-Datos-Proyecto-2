@@ -3,7 +3,7 @@ const { conectarCorporativo } = require('./dbCorporativo');
 
 function configSucursal(puerto, clave, baseDatos) {
   return {
-    user: 'sa',
+    user: 'api_sucursal',
     password: clave,
     server: 'localhost',
     port: puerto,
@@ -21,11 +21,11 @@ function configSucursal(puerto, clave, baseDatos) {
 const sucursales = {
   1: {
     nombre: 'San José',
-    pool: new sql.ConnectionPool(configSucursal(1434, process.env.MSSQL_SANJOSE_PASSWORD, 'WideWorldImporters_SanJose'))
+    pool: new sql.ConnectionPool(configSucursal(1434, process.env.API_SUCURSAL_PASSWORD, 'WideWorldImporters_SanJose'))
   },
   2: {
     nombre: 'Limón',
-    pool: new sql.ConnectionPool(configSucursal(1435, process.env.MSSQL_LIMON_PASSWORD, 'WideWorldImporters_Limon'))
+    pool: new sql.ConnectionPool(configSucursal(1435, process.env.API_SUCURSAL_PASSWORD, 'WideWorldImporters_Limon'))
   }
 };
 
@@ -76,6 +76,11 @@ async function ejecutarSPCorporativo(nombre, parametros = {}, contexto = {}) {
   return ejecutarEnNodo(conectarCorporativo, 'Corporativo', nombre, parametros, contexto);
 }
 
+async function ejecutarSPReporte(nombre, parametros = {}) {
+  if (!nombre.startsWith('dbo.usp_Reporte_')) throw new Error('Procedimiento de reporte inválido.');
+  return ejecutarEnNodo(() => conectarCorporativo('corporativo'), 'Corporativo', nombre, parametros);
+}
+
 async function ejecutarSPSucursal(sucursalId, nombre, parametros = {}, contexto = {}, completo = false) {
   const sucursal = sucursales[sucursalId];
 
@@ -91,4 +96,4 @@ async function cerrarConexiones() {
   await Promise.all(Object.values(sucursales).map(sucursal => sucursal.pool.close()));
   await require('./dbCorporativo').cerrarCorporativo();
 }
-module.exports = { ejecutarSPCorporativo, ejecutarSPSucursal, cerrarConexiones };
+module.exports = { ejecutarSPCorporativo, ejecutarSPReporte, ejecutarSPSucursal, cerrarConexiones };

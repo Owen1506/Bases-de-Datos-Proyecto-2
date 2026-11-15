@@ -1,6 +1,6 @@
 services:
   # Proyecto 1: instancia con WideWorldImporters completa.
-  # La API todavía la usa para clientes, proveedores, inventario, ventas y estadísticas.
+  # Se conserva como origen de la carga inicial del Proyecto 2.
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sql_wwi

@@ -37,7 +37,7 @@ const PASOS = [
   // 1. Contenedores: levantarlos y esperar a que SQL Server responda
   ['Docker', 'levantar los contenedores y esperar a que SQL Server responda'],
 
-  // 2. Proyecto 1 (sql_wwi): restaurar WWI desde el .bak y sus SP. La API todavía usa algunos de ellos
+  // 2. Proyecto 1 (sql_wwi): restaurar WWI desde el .bak como origen de la carga inicial
   ['Proyecto 1', '00_restore_wwi.sql', 'master'],
   ['Proyecto 1', '01_sinonimos.sql'],
   ['Proyecto 1', '02_sp_catalogos.sql'],
@@ -46,6 +46,7 @@ const PASOS = [
   ['Proyecto 1', '05_sp_inventario.sql'],
   ['Proyecto 1', '06_sp_ventas.sql'],
   ['Proyecto 1', '07_sp_estadisticas.sql'],
+  ['Proyecto 1', '08_sp_reportes_6_10.sql'],
 
   // 3. Nodos: revisar que estén listos y crear las bases
   ['Corporativo', 'Proyecto2/00_verificar_nodo.sql', 'master'],
@@ -143,6 +144,7 @@ const PASOS = [
   // 9. Estadísticas: vistas materializadas y SP de los reportes en Corporativo
   ['Corporativo', 'Proyecto2/Estadisticas/01_vistas_materializadas.sql'],
   ['Corporativo', 'Proyecto2/Estadisticas/02_sp_estadisticas.sql'],
+  ['Corporativo', 'Proyecto2/Estadisticas/03_sp_reportes_6_10.sql'],
 
   // 10. Usuarios del login. Los .local.sql se crean desde las plantillas con las claves del .env
   ['Corporativo', 'Proyecto2/Corporativo/02_usuarios.sql'],
@@ -150,6 +152,16 @@ const PASOS = [
   ['Corporativo', 'Proyecto2/Corporativo/03_seguridad_usuarios.local.sql'],
   ['Corporativo', 'Proyecto2/Corporativo/04_usuarios_prueba.local.sql'],
   ['Corporativo', 'Proyecto2/Corporativo/05_verificar_usuarios.sql'],
+
+  // Cuentas SQL de la API. Se crean despues de todos los procedimientos y vistas.
+  ['Corporativo', 'Proyecto2/Corporativo/06_login_api.sql'],
+  ['Claves API', 'generar los .local.sql de cuentas SQL'],
+  ['Corporativo', 'Proyecto2/Corporativo/07_cuentas_api.local.sql'],
+  ['San José', 'Proyecto2/Sucursales/07_cuenta_api.local.sql'],
+  ['Limón', 'Proyecto2/Sucursales/07_cuenta_api.local.sql'],
+  ['Corporativo', 'Proyecto2/Corporativo/08_verificar_cuentas_api.sql'],
+  ['San José', 'Proyecto2/Sucursales/08_verificar_cuenta_api.sql'],
+  ['Limón', 'Proyecto2/Sucursales/08_verificar_cuenta_api.sql'],
 
   // 11. Replicación, al final: sus agentes arrancan solos y no deben coincidir con otros cambios en las bases.
   // Corporativo distribuye; publicaciones sin instantánea porque los datos ya están cargados
@@ -225,6 +237,10 @@ function ejecutarPaso(donde, que, base) {
   if (donde === 'Docker') return correr('docker', ['compose', 'up', '-d', '--wait']);
   if (donde === 'Carga') return ejecutarCarga(que);
   if (donde === 'Claves') return crearArchivosUsuarios();
+  if (donde === 'Claves API') {
+    try { require('./configurarSeguridad').generar(); return true; }
+    catch (error) { console.error(error.message); return false; }
+  }
   return ejecutarSql(donde, que, base);
 }
 
