@@ -87,8 +87,29 @@ async function ejecutarSPSucursal(sucursalId, nombre, parametros = {}, contexto 
     { ...contexto, SucursalID: Number(sucursalId) }, completo);
 }
 
+// Revisa qué nodos responden: true si el nodo contesta un SELECT 1
+async function estadoNodos() {
+  const conexiones = {
+    'Corporativo': conectarCorporativo,
+    'San José': () => sucursales[1].pool.connect(),
+    'Limón': () => sucursales[2].pool.connect()
+  };
+  const estado = {};
+
+  for (const nodo in conexiones) {
+    try {
+      const pool = await conexiones[nodo]();
+      await pool.request().query('SELECT 1');
+      estado[nodo] = true;
+    } catch (error) {
+      estado[nodo] = false;
+    }
+  }
+  return estado;
+}
+
 async function cerrarConexiones() {
   await Promise.all(Object.values(sucursales).map(sucursal => sucursal.pool.close()));
   await require('./dbCorporativo').cerrarCorporativo();
 }
-module.exports = { ejecutarSPCorporativo, ejecutarSPSucursal, cerrarConexiones };
+module.exports = { ejecutarSPCorporativo, ejecutarSPSucursal, estadoNodos, cerrarConexiones };

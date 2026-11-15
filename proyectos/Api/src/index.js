@@ -13,6 +13,7 @@ const estadisticas = require('./routes/estadisticas');
 const auth = require('./routes/auth');
 
 const { autenticar, permitirRol } = require('./sesion');
+const { estadoNodos } = require('./dbNodos');
 const app = express();
 const PUERTO = 3000;
 
@@ -26,6 +27,10 @@ app.use('/api/ventas', autenticar, permitirRol('Administrador'), ventas);
 app.use('/api/catalogos', autenticar, permitirRol('Administrador'), catalogos);
 app.use('/api/estadisticas', autenticar, permitirRol('Corporativo'), estadisticas);
 app.use('/api/auth', auth);
+// Qué nodos responden; no pide sesión porque no devuelve datos
+app.get('/api/estado', async (req, res) => {
+  res.json(await estadoNodos());
+});
 // Ruta no encontrada
 app.use((req, res) => {
   res.status(404).json({ mensaje: 'Ruta no encontrada.' });
