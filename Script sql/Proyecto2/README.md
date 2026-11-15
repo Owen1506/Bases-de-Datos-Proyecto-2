@@ -9,7 +9,7 @@ El sistema distribuido utiliza tres contenedores independientes de SQL Server 20
 | Limón | `wwi_limon` | `localhost,1435` | `WideWorldImporters_Limon` | `wwi_limon_data` |
 | Corporativo | `wwi_corporativo` | `localhost,1436` | `WideWorldImporters_Corporativo` | `wwi_corporativo_data` |
 
-El contenedor `sql_wwi` del Proyecto 1 usa el puerto 1433 y no forma parte de estos tres nodos. La API lo sigue usando para los módulos que todavía no se pasan a los nodos.
+El contenedor `sql_wwi` del Proyecto 1 usa el puerto 1433 y no forma parte de estos tres nodos. Se conserva como origen de la carga inicial.
 
 ## Levantar los nodos
 
@@ -80,4 +80,27 @@ Ejecutar los archivos en este orden en `localhost,1436`:
 
 Los archivos `.local.sql` están excluidos de Git. No publicar las contraseñas de los usuarios, los hashes reales ni la contraseña de la clave maestra. Conservar respaldos seguros de la clave maestra y del certificado con su clave privada para poder recuperar los datos cifrados.
 
-La API usa `MSSQL_CORPORATIVO_PASSWORD` en el `.env` de la raíz para conectarse a Corporativo. Es la misma variable que usa docker compose para la contraseña de `sa` del contenedor Corporativo. El login web consulta la API; las demás rutas y permisos de SQL Server aún requieren configurar autorización.
+## Cuentas SQL de la API
+
+La API usa `API_LOGIN_PASSWORD`, `API_ADMIN_PASSWORD`, `API_CORPORATIVO_PASSWORD` y
+`API_SUCURSAL_PASSWORD` del `.env` raíz. El instalador crea cuatro logins SQL:
+`api_login`, `api_administrador` y `api_corporativo` en Corporativo, y
+`api_sucursal` en cada sucursal. El login web consulta `dbo.Usuarios` mediante
+`dbo.usp_Api_Login`; los administradores usan la cuenta del nodo asignado y la de
+Corporativo para escrituras compartidas; el rol Corporativo solo usa la cuenta de
+reportes. Las cuentas no son miembros de `sysadmin` ni de `db_owner`.
+
+En una instalación nueva, `node scripts/instalar.js` crea las cuentas tras los
+procedimientos. En bases ya instaladas, desde `proyectos/Api` ejecutar
+`node scripts/configurarSeguridad.js` y reiniciar la API. Ese comando no restaura
+ni recarga datos. Los archivos `.local.sql` generados contienen claves SQL y están
+excluidos de Git. `sa` sigue usándose para instalar, cargar y configurar replicación.
+
+## Reportes 6 al 10
+
+`Estadisticas/03_sp_reportes_6_10.sql` crea los procedimientos de matriz anual,
+seguimiento de clientes y proveedores, rotación estimada y métodos de envío por
+destino. El instalador lo ejecuta después de los reportes 1 al 5. Para bases ya
+instaladas, `npm run actualizar:api` aplica ese archivo y otorga su ejecución a
+`api_corporativo`. El archivo `Script sql/08_sp_reportes_6_10.sql` contiene los
+mismos cinco reportes adaptados a la base original del Proyecto 1.

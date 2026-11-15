@@ -32,6 +32,7 @@ de compatibilidad de `Script sql/Proyecto2/Api/`.
 
 ```bash
 npm run actualizar:api
+node scripts/configurarSeguridad.js
 npm start
 ```
 
@@ -47,21 +48,10 @@ Las sesiones duran ocho horas, se invalidan al cerrar sesión y se pierden al re
 la API. Los detalles públicos siguen disponibles si Corporativo falla, con un aviso
 sobre los contactos privados no disponibles. Editar esos detalles requiere Corporativo.
 
-Las conexiones SQL todavía utilizan `sa`; queda pendiente crear cuentas con permisos
-limitados. Esta actualización no verifica la propagación de la replicación ni su
+La API usa cuentas SQL separadas para el login, la administración, los reportes y las
+sucursales. `sa` se reserva para instalación, carga y agentes de replicación. Esta
+actualización no verifica la propagación de la replicación ni su
 recuperación después de una caída.
-
-Para validar la integración, con los nodos preparados y las credenciales SQL correctas:
-
-```bash
-cd proyectos/Api
-npm run test:integracion
-```
-
-Las pruebas crean usuarios temporales únicos y los eliminan al terminar. Las pruebas de
-escritura de clientes, proveedores y ventas terminan en `ROLLBACK`; no modifican los
-usuarios existentes ni dejan facturas de prueba. Se recomienda ejecutarlas sin operaciones
-simultáneas de usuarios sobre los nodos.
 
 Las instrucciones siguientes describen la instalación manual original del Proyecto 1.
 
@@ -95,14 +85,23 @@ Tecnologías: SQL Server 2022 en Docker (WSL2), API en Node.js + Express, sitio 
   proveedor y CRUD.
 - **Ventas:** listado con filtros (cliente, rango de fechas y rango de montos), detalle de la factura
   con encabezado y líneas, enlaces al cliente y a los productos, y CRUD.
-- **Reportes 1 al 5:** compras a proveedores y ventas a clientes con ROLLUP; top 5 de productos,
-  clientes y proveedores con DENSE_RANK y PARTITION BY.
+- **Reportes 1 al 10:** compras y ventas con ROLLUP; top 5 con DENSE_RANK;
+  matriz de ventas por categoría y año; seguimiento mensual de clientes y proveedores;
+  rotación estimada de inventario; y métodos de envío por destino. Todos admiten filtro
+  por sucursal o consolidado en el Proyecto 2.
 - Validaciones en la página, en la API y en los stored procedures, con mensajes de error claros.
 
-## Objetivos no alcanzados
+### Criterios de los reportes 6 al 10
 
-- Reportes 6 al 10 (matriz de ventas por categoría y año, seguimiento mensual de compras de clientes
-  y de proveedores, rotación de inventario y método de envío favorito).
+- WWI no incluye una jerarquía de subcategorías: se usa el grupo de producto como categoría
+  y el producto como filtro más específico. Un producto con varios grupos aparece en cada
+  grupo de la matriz; los demás reportes usan `EXISTS` para no duplicar sus líneas.
+- El seguimiento de proveedores utiliza fechas de órdenes de compra y cantidades en
+  empaques externos. Los mínimos y máximos de los seguimientos son cantidades por línea.
+- Los días de rotación son una estimación: `365 × existencias actuales ÷ unidades vendidas
+  en el año`. No se dispone de saldos históricos para calcular la rotación exacta de cada año.
+- El destino del envío se toma de la ciudad de entrega actual del cliente; la factura no
+  guarda una ciudad de destino histórica.
 
 ## Requisitos
 
@@ -174,13 +173,16 @@ La página abre en el formulario de ingreso. El formulario llama a `POST /api/au
 la API valida las credenciales contra `dbo.Usuarios` en Corporativo. Para reproducir
 la base y crear los usuarios de prueba, seguir el orden indicado en la
 [documentación de los nodos](Script%20sql/Proyecto2/README.md). Configurar
-`MSSQL_CORPORATIVO_PASSWORD` en el `.env` de la raíz con la contraseña de `sa`
-del contenedor Corporativo.
+las cuatro variables `API_*_PASSWORD` en el `.env` de la raíz. El instalador crea
+los logins SQL y sus permisos después de instalar los procedimientos. En bases ya
+instaladas, ejecutar `node scripts/configurarSeguridad.js` desde `proyectos/Api` y
+reiniciar la API; no repetir la restauración ni la carga.
 
 El administrador ve Clientes, Proveedores, Inventario y Ventas; Corporativo ve
 Estadísticas. El token de sesión se mantiene solo en memoria del navegador y se pierde al
-recargar la página. Las rutas de la API verifican sesión y rol. Todavía falta usar cuentas
-de SQL Server con permisos limitados.
+recargar la página. Las rutas de la API verifican sesión y rol. El rol Administrador
+usa `api_administrador` en Corporativo y `api_sucursal` en su nodo; el rol Corporativo
+usa `api_corporativo` para reportes. El login web usa `api_login`.
 
 ## Estructura del proyecto
 
@@ -191,7 +193,7 @@ Proyecto-1-Bases2/
 │   ├── Api/                    API en Node.js + Express
 │   │   └── src/
 │   │       ├── routes/         una ruta por módulo, cada una llama a sus stored procedures
-│   │       ├── db.js           conexión a SQL Server
+│   │       ├── dbNodos.js      conexiones a los tres nodos SQL Server
 │   │       ├── validar.js      validaciones de los parámetros
 │   │       └── index.js        inicio de la API
 │   └── WebSite/                sitio web en React + Vite
