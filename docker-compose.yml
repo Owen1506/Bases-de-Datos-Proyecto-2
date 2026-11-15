@@ -15,11 +15,17 @@ services:
       - sqldata:/var/opt/mssql
       - ./backups:/var/opt/mssql/backup
       - "./Script sql:/scripts"
+    # healthy cuando SQL Server ya responde consultas (docker compose up --wait espera hasta eso)
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -b -Q "SELECT 1"
+      interval: 5s
+      retries: 30
 
   # Proyecto 2: los tres nodos del sistema distribuido.
   # El hostname debe ser igual al nombre del contenedor: la replicación se conecta por nombre de servidor.
   # El Agent ejecuta los agentes de la replicación.
   # CLAVE_*: contraseñas de los tres nodos, para los scripts de replicación.
+  # healthcheck: igual que en sql_wwi, healthy cuando SQL Server ya responde.
   wwi_sanjose:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: wwi_sanjose
@@ -40,6 +46,10 @@ services:
       - "./Script sql:/scripts"
     networks:
       - wwi_red
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -b -Q "SELECT 1"
+      interval: 5s
+      retries: 30
 
   wwi_limon:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -61,6 +71,10 @@ services:
       - "./Script sql:/scripts"
     networks:
       - wwi_red
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -b -Q "SELECT 1"
+      interval: 5s
+      retries: 30
 
   wwi_corporativo:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -82,6 +96,10 @@ services:
       - "./Script sql:/scripts"
     networks:
       - wwi_red
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -b -Q "SELECT 1"
+      interval: 5s
+      retries: 30
 
 # Los volúmenes y la red de los nodos llevan nombre fijo, igual al que tenían al crearlos con docker run,
 # para que docker compose reutilice los datos que ya existan.
