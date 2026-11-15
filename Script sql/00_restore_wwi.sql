@@ -6,6 +6,8 @@
 USE master;
 GO
 
+-- Solo si la base no existe, para poder ejecutarlo de nuevo sin error
+IF DB_ID(N'WideWorldImporters') IS NULL
 RESTORE DATABASE WideWorldImporters
 FROM DISK = '/var/opt/mssql/backup/WideWorldImporters-Full.bak'
 WITH
