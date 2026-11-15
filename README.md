@@ -17,6 +17,54 @@ II Semestre, 2026
 
 La configuración de los tres contenedores del Proyecto 2 está documentada en [Script sql/Proyecto2/README.md](Script%20sql/Proyecto2/README.md).
 
+## Ejecución del Proyecto 2
+
+La API utiliza los nodos distribuidos: consultas y ventas en la sucursal del usuario;
+escrituras compartidas y datos sensibles en Corporativo. La base original se conserva
+como origen de migración, pero ya no se consulta desde las rutas de la aplicación.
+
+Para una instalación nueva, preparar `.env`, el respaldo y las dependencias; ejecutar
+`node scripts/instalar.js` desde `proyectos/Api`. El instalador incluye los procedimientos
+de compatibilidad de `Script sql/Proyecto2/Api/`.
+
+**Si las bases ya están instaladas, no repetir la restauración ni la carga.** Desde
+`proyectos/Api`, aplicar únicamente:
+
+```bash
+npm run actualizar:api
+npm start
+```
+
+Las contraseñas MSSQL del `.env` deben
+coincidir con las instancias ya creadas; editar `.env` no cambia la contraseña del servidor.
+
+En otra terminal, desde `proyectos/WebSite`, ejecutar `npm run dev` y abrir
+http://localhost:5173. Reiniciar la API y volver a ingresar después de actualizar.
+
+El login devuelve un token que la página mantiene en memoria. La API valida sesión y
+rol en cada petición y obtiene de ella la sucursal; no confía en `X-Sucursal`.
+Las sesiones duran ocho horas, se invalidan al cerrar sesión y se pierden al reiniciar
+la API. Los detalles públicos siguen disponibles si Corporativo falla, con un aviso
+sobre los contactos privados no disponibles. Editar esos detalles requiere Corporativo.
+
+Las conexiones SQL todavía utilizan `sa`; queda pendiente crear cuentas con permisos
+limitados. Esta actualización no verifica la propagación de la replicación ni su
+recuperación después de una caída.
+
+Para validar la integración, con los nodos preparados y las credenciales SQL correctas:
+
+```bash
+cd proyectos/Api
+npm run test:integracion
+```
+
+Las pruebas crean usuarios temporales únicos y los eliminan al terminar. Las pruebas de
+escritura de clientes, proveedores y ventas terminan en `ROLLBACK`; no modifican los
+usuarios existentes ni dejan facturas de prueba. Se recomienda ejecutarlas sin operaciones
+simultáneas de usuarios sobre los nodos.
+
+Las instrucciones siguientes describen la instalación manual original del Proyecto 1.
+
 ### Integrantes
 - Elian J. Trejos Quirós - 2024143262
 - Owen Smith Cerdas - 2024083328
@@ -130,8 +178,8 @@ la base y crear los usuarios de prueba, seguir el orden indicado en la
 del contenedor Corporativo.
 
 El administrador ve Clientes, Proveedores, Inventario y Ventas; Corporativo ve
-Estadísticas. La sesión se mantiene solo en memoria del navegador y se cierra al
-recargar la página. Todavía falta proteger las demás rutas de la API y usar cuentas
+Estadísticas. El token de sesión se mantiene solo en memoria del navegador y se pierde al
+recargar la página. Las rutas de la API verifican sesión y rol. Todavía falta usar cuentas
 de SQL Server con permisos limitados.
 
 ## Estructura del proyecto

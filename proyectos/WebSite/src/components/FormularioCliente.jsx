@@ -54,6 +54,7 @@ function FormularioCliente({ clienteId, alCerrar, alGuardar }) {
 
       if (!esNuevo) {
         const c = await consultar('/clientes/' + clienteId);
+        if (!c.ContactoDisponible) throw new Error('Los datos de Corporativo no están disponibles. Intente editar más tarde.');
         setDatos({
           Nombre: c.Nombre,
           CategoriaID: c.CategoriaID,

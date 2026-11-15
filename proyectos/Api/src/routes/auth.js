@@ -4,7 +4,12 @@ const sql = require('mssql');
 const crypto = require('node:crypto');
 const { conectarCorporativo } = require('../dbCorporativo');
 
+const { crearSesion, autenticar, cerrarSesion } = require('../sesion');
 const router = express.Router();
+router.post('/logout', autenticar, (req, res) => {
+  cerrarSesion(req.tokenSesion);
+  res.json({ mensaje: 'Sesión cerrada.' });
+});
 
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
@@ -54,16 +59,15 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ mensaje: 'Credenciales incorrectas.' });
     }
 
-    return res.json({
-      mensaje: 'Inicio de sesión correcto.',
-      usuario: {
-        iduser: usuario.iduser,
-        username: usuario.username,
-        fullname: usuario.fullname,
-        rol: usuario.rol,
-        SucursalID: usuario.SucursalID
-      }
-    });
+    const identidad = {
+      iduser: usuario.iduser, username: usuario.username, fullname: usuario.fullname,
+      rol: usuario.rol, SucursalID: usuario.SucursalID
+    };
+    if (!['Administrador', 'Corporativo'].includes(identidad.rol) ||
+        (identidad.rol === 'Administrador' && ![1, 2].includes(identidad.SucursalID))) {
+      return res.status(403).json({ mensaje: 'El usuario no tiene un rol o sucursal válido.' });
+    }
+    return res.json({ mensaje: 'Inicio de sesión correcto.', usuario: identidad, token: crearSesion(identidad) });
 
   } catch (error) {
     console.error(error);

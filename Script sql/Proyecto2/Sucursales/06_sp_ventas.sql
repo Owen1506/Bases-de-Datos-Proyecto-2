@@ -10,7 +10,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
     DECLARE @SucursalID INT=TRY_CONVERT(INT,SESSION_CONTEXT(N'SucursalID'));
-    IF @SucursalID NOT IN(1,2) THROW 51400,'No existe una sucursal válida en la sesión.',1;
+    IF @SucursalID IS NULL OR @SucursalID NOT IN(1,2) THROW 51400,'No existe una sucursal válida en la sesión.',1;
     IF @Pagina<1 OR @TamanoPagina NOT BETWEEN 1 AND 200
         THROW 51401,'La página o su tamaño no son válidos.',1;
 
@@ -41,7 +41,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
     DECLARE @SucursalID INT=TRY_CONVERT(INT,SESSION_CONTEXT(N'SucursalID'));
-    IF @SucursalID NOT IN(1,2) THROW 51402,'No existe una sucursal válida en la sesión.',1;
+    IF @SucursalID IS NULL OR @SucursalID NOT IN(1,2) THROW 51402,'No existe una sucursal válida en la sesión.',1;
     IF NOT EXISTS(SELECT 1 FROM Sales.Invoices WHERE SucursalID=@SucursalID AND InvoiceID=@FacturaID)
         THROW 51403,'La factura no existe en esta sucursal.',1;
 
@@ -51,20 +51,25 @@ BEGIN
            i.AccountsPersonID AS ContactoCuentasID,
            i.SalespersonPersonID AS VendedorID,p.FullName AS Vendedor,
            i.PackedByPersonID AS EmpacadoPorID,
+           i.CustomerPurchaseOrderNumber AS NumeroOrdenCliente,
            i.CustomerPurchaseOrderNumber AS OrdenCompraCliente,
            i.IsCreditNote AS EsNotaCredito,i.CreditNoteReason AS RazonNotaCredito,
            i.Comments AS Comentarios,i.DeliveryInstructions AS InstruccionesEntrega,
-           i.TotalDryItems AS TotalSecos,i.TotalChillerItems AS TotalRefrigerados
+           i.TotalDryItems AS TotalSecos,i.TotalChillerItems AS TotalRefrigerados,
+           dm.DeliveryMethodName AS MetodoEntrega,
+           (SELECT SUM(l.ExtendedPrice) FROM Sales.InvoiceLines l
+            WHERE l.SucursalID=i.SucursalID AND l.InvoiceID=i.InvoiceID) AS MontoTotal
     FROM Sales.Invoices AS i
     JOIN Sales.Customers AS c ON c.CustomerID=i.CustomerID
     JOIN Application.People AS p ON p.PersonID=i.SalespersonPersonID
+    LEFT JOIN Application.DeliveryMethods dm ON dm.DeliveryMethodID=i.DeliveryMethodID
     WHERE i.SucursalID=@SucursalID AND i.InvoiceID=@FacturaID;
 
-    SELECT il.InvoiceLineID AS LineaFacturaID,il.StockItemID AS ProductoID,
-           il.Description AS Descripcion,il.PackageTypeID AS TipoEmpaqueID,
+    SELECT il.InvoiceLineID AS LineaID,il.StockItemID AS ProductoID,
+           il.Description AS Producto,il.PackageTypeID AS TipoEmpaqueID,
            il.Quantity AS Cantidad,il.UnitPrice AS PrecioUnitario,
-           il.TaxRate AS TasaImpuesto,il.TaxAmount AS Impuesto,
-           il.LineProfit AS Ganancia,il.ExtendedPrice AS Total
+           il.TaxRate AS Impuesto,il.TaxAmount AS MontoImpuesto,
+           il.LineProfit AS Ganancia,il.ExtendedPrice AS TotalLinea
     FROM Sales.InvoiceLines AS il
     WHERE il.SucursalID=@SucursalID AND il.InvoiceID=@FacturaID
     ORDER BY il.InvoiceLineID;
@@ -82,7 +87,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
     DECLARE @SucursalID INT=TRY_CONVERT(INT,SESSION_CONTEXT(N'SucursalID'));
-    IF @SucursalID NOT IN(1,2) THROW 51410,'No existe una sucursal válida en la sesión.',1;
+    IF @SucursalID IS NULL OR @SucursalID NOT IN(1,2) THROW 51410,'No existe una sucursal válida en la sesión.',1;
     IF ISJSON(@LineasJson)<>1 THROW 51411,'Las líneas de la factura no son JSON válido.',1;
 
     DECLARE @Lineas TABLE(ProductoID INT PRIMARY KEY,Cantidad INT NOT NULL,
@@ -110,6 +115,11 @@ BEGIN
                       WHERE PersonID=@VendedorID AND IsSalesperson=1 AND SucursalID=@SucursalID)
             THROW 51414,'El vendedor no pertenece a esta sucursal.',1;
 
+        IF @ContactoID IS NOT NULL AND NOT EXISTS(SELECT 1 FROM Sales.Customers
+            WHERE CustomerID=@ClienteID AND @ContactoID IN(PrimaryContactPersonID,AlternateContactPersonID))
+            THROW 51416,'El contacto no pertenece al cliente.',1;
+        IF @MetodoEntregaID IS NOT NULL AND NOT EXISTS(SELECT 1 FROM Application.DeliveryMethods WHERE DeliveryMethodID=@MetodoEntregaID)
+            THROW 51417,'El método de entrega no existe.',1;
         DECLARE @BloqueoInventario INT;
         SELECT @BloqueoInventario=SUM(h.StockItemID)
         FROM Warehouse.StockItemHoldings AS h WITH(UPDLOCK,HOLDLOCK)
@@ -174,12 +184,13 @@ GO
 
 CREATE OR ALTER PROCEDURE dbo.usp_Ventas_Actualizar
     @FacturaID INT,@ClienteID INT,@VendedorID INT,@LineasJson NVARCHAR(MAX),
-    @Fecha DATE=NULL,@Comentarios NVARCHAR(MAX)=NULL,@InstruccionesEntrega NVARCHAR(MAX)=NULL
+    @Fecha DATE=NULL,@Comentarios NVARCHAR(MAX)=NULL,@InstruccionesEntrega NVARCHAR(MAX)=NULL,
+    @MetodoEntregaID INT=NULL,@ContactoID INT=NULL,@OrdenCompraCliente NVARCHAR(20)=NULL
 AS
 BEGIN
     SET NOCOUNT ON;
     DECLARE @SucursalID INT=TRY_CONVERT(INT,SESSION_CONTEXT(N'SucursalID'));
-    IF @SucursalID NOT IN(1,2) THROW 51420,'No existe una sucursal válida en la sesión.',1;
+    IF @SucursalID IS NULL OR @SucursalID NOT IN(1,2) THROW 51420,'No existe una sucursal válida en la sesión.',1;
     IF ISJSON(@LineasJson)<>1 THROW 51421,'Las líneas de la factura no son JSON válido.',1;
     DECLARE @Nuevas TABLE(ProductoID INT PRIMARY KEY,Cantidad INT,Descripcion NVARCHAR(100),
         TipoEmpaqueID INT,PrecioUnitario DECIMAL(18,2),TasaImpuesto DECIMAL(18,3));
@@ -208,6 +219,11 @@ BEGIN
              WHERE SucursalID=@SucursalID AND InvoiceID=@FacturaID GROUP BY StockItemID) AS x
           ON x.StockItemID=h.StockItemID
         WHERE h.SucursalID=@SucursalID;
+        IF @ContactoID IS NOT NULL AND NOT EXISTS(SELECT 1 FROM Sales.Customers
+            WHERE CustomerID=@ClienteID AND @ContactoID IN(PrimaryContactPersonID,AlternateContactPersonID))
+            THROW 51416,'El contacto no pertenece al cliente.',1;
+        IF @MetodoEntregaID IS NOT NULL AND NOT EXISTS(SELECT 1 FROM Application.DeliveryMethods WHERE DeliveryMethodID=@MetodoEntregaID)
+            THROW 51417,'El método de entrega no existe.',1;
         DECLARE @BloqueoInventario INT;
         SELECT @BloqueoInventario=SUM(h.StockItemID) FROM Warehouse.StockItemHoldings AS h WITH(UPDLOCK,HOLDLOCK)
         JOIN @Nuevas AS n ON n.ProductoID=h.StockItemID WHERE h.SucursalID=@SucursalID;
@@ -221,10 +237,10 @@ BEGIN
         FROM Warehouse.StockItemHoldings AS h JOIN @Nuevas AS n ON n.ProductoID=h.StockItemID
         WHERE h.SucursalID=@SucursalID;
         UPDATE i SET CustomerID=@ClienteID,BillToCustomerID=c.BillToCustomerID,
-            DeliveryMethodID=c.DeliveryMethodID,ContactPersonID=c.PrimaryContactPersonID,
+            DeliveryMethodID=COALESCE(@MetodoEntregaID,c.DeliveryMethodID),ContactPersonID=COALESCE(@ContactoID,c.PrimaryContactPersonID),
             AccountsPersonID=c.PrimaryContactPersonID,SalespersonPersonID=@VendedorID,
             PackedByPersonID=@VendedorID,InvoiceDate=COALESCE(@Fecha,InvoiceDate),
-            Comments=@Comentarios,DeliveryInstructions=@InstruccionesEntrega
+            Comments=@Comentarios,DeliveryInstructions=@InstruccionesEntrega,CustomerPurchaseOrderNumber=@OrdenCompraCliente
         FROM Sales.Invoices AS i JOIN Sales.Customers AS c ON c.CustomerID=@ClienteID
         WHERE i.SucursalID=@SucursalID AND i.InvoiceID=@FacturaID;
         INSERT Sales.InvoiceLines(SucursalID,InvoiceID,StockItemID,Description,PackageTypeID,
@@ -260,7 +276,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
     DECLARE @SucursalID INT=TRY_CONVERT(INT,SESSION_CONTEXT(N'SucursalID'));
-    IF @SucursalID NOT IN(1,2) THROW 51430,'No existe una sucursal válida en la sesión.',1;
+    IF @SucursalID IS NULL OR @SucursalID NOT IN(1,2) THROW 51430,'No existe una sucursal válida en la sesión.',1;
     BEGIN TRY
         BEGIN TRANSACTION;
         IF NOT EXISTS(SELECT 1 FROM Sales.Invoices WITH(UPDLOCK,HOLDLOCK)

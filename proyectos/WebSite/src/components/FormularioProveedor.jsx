@@ -58,6 +58,7 @@ function FormularioProveedor({ proveedorId, alCerrar, alGuardar }) {
 
       if (!esNuevo) {
         const p = await consultar('/proveedores/' + proveedorId);
+        if (!p.ContactoDisponible) throw new Error('Los datos de Corporativo no están disponibles. Intente editar más tarde.');
         setDatos({
           Nombre: p.Nombre,
           ReferenciaProveedor: textoOVacio(p.CodigoProveedor),

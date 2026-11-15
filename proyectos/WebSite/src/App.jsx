@@ -6,7 +6,7 @@ import Estadisticas from './pages/Estadisticas';
 import Inventario from './pages/Inventario';
 import Ventas from './pages/Ventas';
 import Login from './pages/Login';
-import { elegirSucursal } from './api';
+import { enviar, establecerSesion } from './api';
 
 // Modulos del sitio, cada uno es una pestaña
 const MODULOS = [
@@ -23,15 +23,20 @@ function App() {
   const modulosPermitidos = usuario ? MODULOS.filter((modulo) => modulo.roles.includes(usuario.rol)) : [];
 
   function ingresar(datosUsuario) {
-    elegirSucursal(datosUsuario.SucursalID);
     setUsuario(datosUsuario);
     setModuloActivo(datosUsuario.rol === 'Corporativo' ? 'estadisticas' : 'clientes');
   }
 
-  function salir() {
-    elegirSucursal(null);
-    setUsuario(null);
-    setModuloActivo('clientes');
+  async function salir() {
+    try {
+      await enviar('/auth/logout', 'POST', {});
+    } catch {
+      // Si la API está apagada, la sesión local igualmente se cierra.
+    } finally {
+      establecerSesion(null);
+      setUsuario(null);
+      setModuloActivo('clientes');
+    }
   }
 
   // Decide que pagina mostrar segun la pestaña activa.

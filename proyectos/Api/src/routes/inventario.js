@@ -5,7 +5,7 @@ const { esEntero, vacio } = require('../validar');
 const router = express.Router();
 
 // El catálogo se escribe en Corporativo. La lista, el detalle y las existencias
-// son de la sucursal del usuario, que la web manda en el encabezado X-Sucursal.
+// son de la sucursal del usuario autenticado por la API.
 
 // GET /api/inventario?nombre=&grupoId=&cantidadMin=&cantidadMax=&pagina=
 router.get('/', async (req, res) => {
@@ -40,7 +40,7 @@ router.get('/', async (req, res) => {
     grupoId = Number(grupoId);
   }
 
-  const filas = await ejecutarSPSucursal(req.get('X-Sucursal'), 'dbo.usp_Productos_Listar', {
+  const filas = await ejecutarSPSucursal(req.usuario.SucursalID, 'dbo.usp_Productos_Listar', {
     Nombre: nombre,
     GrupoID: grupoId,
     CantidadMin: cantidadMin,
@@ -57,7 +57,7 @@ router.get('/:id', async (req, res) => {
     return res.status(400).json({ mensaje: 'El código del producto debe ser un número entero.' });
   }
 
-  const filas = await ejecutarSPSucursal(req.get('X-Sucursal'), 'dbo.usp_Productos_Detalle', {
+  const filas = await ejecutarSPSucursal(req.usuario.SucursalID, 'dbo.usp_Productos_Detalle', {
     ProductoID: Number(req.params.id)
   });
 
@@ -217,7 +217,7 @@ router.put('/:id/existencias', async (req, res) => {
     return res.status(400).json({ mensaje: 'La ubicación debe tener 20 caracteres o menos.' });
   }
 
-  await ejecutarSPSucursal(req.get('X-Sucursal'), 'dbo.usp_Existencias_Actualizar', {
+  await ejecutarSPSucursal(req.usuario.SucursalID, 'dbo.usp_Existencias_Actualizar', {
     ProductoID: Number(req.params.id),
     CantidadDisponible: Number(CantidadDisponible),
     Ubicacion: textoOpcional(Ubicacion)

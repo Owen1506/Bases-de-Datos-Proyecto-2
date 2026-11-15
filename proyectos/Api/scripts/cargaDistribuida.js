@@ -115,7 +115,7 @@ async function exportar() {
     const proveedoresOrigen = await consultar(transaccion, `
       SELECT SupplierID, SupplierName, SupplierCategoryID,
              PrimaryContactPersonID, AlternateContactPersonID, DeliveryMethodID,
-             PaymentDays, SupplierReference, PhoneNumber, FaxNumber, WebsiteURL,
+             DeliveryCityID, PostalCityID, PaymentDays, SupplierReference, PhoneNumber, FaxNumber, WebsiteURL,
              DeliveryAddressLine1, DeliveryAddressLine2, DeliveryPostalCode,
              CASE WHEN DeliveryLocation IS NULL THEN NULL ELSE DeliveryLocation.STAsText() END AS DeliveryLocationWkt,
              CASE WHEN DeliveryLocation IS NULL THEN NULL ELSE DeliveryLocation.STSrid END AS DeliveryLocationSrid,
@@ -520,6 +520,8 @@ async function actualizarProveedores(transaccion, filas) {
     request.input('PrimaryContactPersonID', sql.Int, proveedor.PrimaryContactPersonID);
     request.input('AlternateContactPersonID', sql.Int, proveedor.AlternateContactPersonID);
     request.input('DeliveryMethodID', sql.Int, proveedor.DeliveryMethodID);
+    request.input('DeliveryCityID', sql.Int, proveedor.DeliveryCityID ?? null);
+    request.input('PostalCityID', sql.Int, proveedor.PostalCityID ?? null);
     request.input('PaymentDays', sql.Int, proveedor.PaymentDays);
     request.input('SupplierReference', sql.NVarChar(20), proveedor.SupplierReference);
     const resultado = await request.query(`
@@ -527,7 +529,8 @@ async function actualizarProveedores(transaccion, filas) {
       SET SupplierName=@SupplierName, SupplierCategoryID=@SupplierCategoryID,
           PrimaryContactPersonID=@PrimaryContactPersonID,
           AlternateContactPersonID=@AlternateContactPersonID,
-          DeliveryMethodID=@DeliveryMethodID, PaymentDays=@PaymentDays,
+          DeliveryMethodID=@DeliveryMethodID, DeliveryCityID=COALESCE(@DeliveryCityID,DeliveryCityID),
+          PostalCityID=COALESCE(@PostalCityID,PostalCityID), PaymentDays=@PaymentDays,
           SupplierReference=@SupplierReference
       WHERE SupplierID=@SupplierID;`);
     if (resultado.rowsAffected[0] !== 1) throw new Error(`No existe SupplierID ${proveedor.SupplierID}.`);
