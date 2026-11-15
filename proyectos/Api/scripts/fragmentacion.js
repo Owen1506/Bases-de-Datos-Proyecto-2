@@ -94,8 +94,10 @@ async function exportar() {
       productos = (await new sql.Request(tx).query(consultaProductos)).recordset;
       grupos = (await new sql.Request(tx).query(`SELECT StockItemID AS ProductoID, StockGroupID AS GrupoID
         FROM Warehouse.StockItemStockGroups ORDER BY StockItemID, StockGroupID`)).recordset;
+      // Además de la cantidad van el costo y los niveles de reorden: las ventas calculan la ganancia con LastCostPrice
       existencias = (await new sql.Request(tx).query(`SELECT StockItemID AS ProductoID,
-        QuantityOnHand AS CantidadOriginal FROM Warehouse.StockItemHoldings ORDER BY StockItemID`)).recordset;
+        QuantityOnHand AS CantidadOriginal, LastStocktakeQuantity, LastCostPrice, ReorderLevel, TargetStockLevel
+        FROM Warehouse.StockItemHoldings ORDER BY StockItemID`)).recordset;
       await tx.commit();
     } catch (error) {
       await tx.rollback();
@@ -155,10 +157,16 @@ async function cargarNodo(nodo, datos) {
       }
       if (nodo.nombre !== 'Corporativo') {
         for (const e of datos.existencias) {
+          // Solo la cantidad se reparte entre las sucursales; el costo y los niveles se copian iguales
           await new sql.Request(tx).input('ProductoID', sql.Int, e.ProductoID)
             .input('Cantidad', sql.Int, cantidadPara(nodo, e.CantidadOriginal))
-            .query(`INSERT INTO Warehouse.StockItemHoldings (StockItemID, QuantityOnHand)
-              VALUES (@ProductoID, @Cantidad)`);
+            .input('UltimoConteo', sql.Int, e.LastStocktakeQuantity ?? null)
+            .input('UltimoCosto', sql.Decimal(18, 2), e.LastCostPrice ?? null)
+            .input('NivelReorden', sql.Int, e.ReorderLevel ?? null)
+            .input('NivelObjetivo', sql.Int, e.TargetStockLevel ?? null)
+            .query(`INSERT INTO Warehouse.StockItemHoldings (StockItemID, QuantityOnHand,
+                LastStocktakeQuantity, LastCostPrice, ReorderLevel, TargetStockLevel)
+              VALUES (@ProductoID, @Cantidad, @UltimoConteo, @UltimoCosto, @NivelReorden, @NivelObjetivo)`);
         }
       }
       await tx.commit();
