@@ -3,6 +3,14 @@
 USE WideWorldImporters_SanJose;
 GO
 
+-- Esperar a que el agente del catálogo (paso 4) termine de preparar esta base: crea sus procedimientos sp_MS*.
+-- Si se publica al mismo tiempo, chocan (deadlock). Espera hasta 2 minutos, más 5 segundos de margen.
+DECLARE @limite DATETIME = DATEADD(MINUTE, 2, GETDATE());
+WHILE NOT EXISTS (SELECT 1 FROM sys.procedures WHERE name LIKE N'sp[_]MSins[_]%') AND GETDATE() < @limite
+    WAITFOR DELAY '00:00:02';
+WAITFOR DELAY '00:00:05';
+GO
+
 EXEC sp_replicationdboption
     @dbname = N'WideWorldImporters_SanJose',
     @optname = N'publish',
