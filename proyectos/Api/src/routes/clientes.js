@@ -1,7 +1,8 @@
 const express = require('express');
-const { ejecutarSP } = require('../db');
+const { ejecutarSPCorporativo, ejecutarSPSucursal } = require('../dbNodos');
 const { esEntero, vacio } = require('../validar');
 
+const { completarDetalle } = require('../detalleDistribuido');
 const router = express.Router();
 
 // GET /api/clientes?nombre=&categoriaId=&metodoEntregaId=&pagina=
@@ -30,7 +31,7 @@ router.get('/', async (req, res) => {
     metodoEntregaId = Number(metodoEntregaId);
   }
 
-  const filas = await ejecutarSP('dbo.usp_Clientes_Listar', {
+  const filas = await ejecutarSPSucursal(req.usuario.SucursalID, 'dbo.usp_Clientes_Listar', {
     Nombre: nombre,
     CategoriaID: categoriaId,
     MetodoEntregaID: metodoEntregaId,
@@ -46,7 +47,7 @@ router.get('/:id', async (req, res) => {
     return res.status(400).json({ mensaje: 'El código del cliente debe ser un número entero.' });
   }
 
-  const filas = await ejecutarSP('dbo.usp_Clientes_Detalle', {
+  const filas = await ejecutarSPSucursal(req.usuario.SucursalID, 'dbo.usp_Api_Clientes_Publico', {
     ClienteID: Number(req.params.id)
   });
 
@@ -54,7 +55,7 @@ router.get('/:id', async (req, res) => {
     return res.status(404).json({ mensaje: 'No existe un cliente con ese código.' });
   }
 
-  res.json(filas[0]);
+  res.json(await completarDetalle('Clientes', filas[0]));
 });
 
 // ---------- Insertar, actualizar y eliminar ----------
@@ -157,7 +158,7 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ mensaje: error });
   }
 
-  const filas = await ejecutarSP('dbo.usp_Clientes_Insertar', parametrosCliente(req.body));
+  const filas = await ejecutarSPCorporativo('dbo.usp_Api_Clientes_Guardar', parametrosCliente(req.body));
 
   res.status(201).json({ ClienteID: filas[0].ClienteID, mensaje: 'Cliente creado correctamente.' });
 });
@@ -176,7 +177,7 @@ router.put('/:id', async (req, res) => {
   const parametros = parametrosCliente(req.body);
   parametros.ClienteID = Number(req.params.id);
 
-  await ejecutarSP('dbo.usp_Clientes_Actualizar', parametros);
+  await ejecutarSPCorporativo('dbo.usp_Api_Clientes_Guardar', parametros);
 
   res.json({ mensaje: 'Cliente actualizado correctamente.' });
 });
@@ -187,7 +188,7 @@ router.delete('/:id', async (req, res) => {
     return res.status(400).json({ mensaje: 'El código del cliente debe ser un número entero.' });
   }
 
-  await ejecutarSP('dbo.usp_Clientes_Eliminar', { ClienteID: Number(req.params.id) });
+  await ejecutarSPCorporativo('dbo.usp_Clientes_Eliminar', { ClienteID: Number(req.params.id) });
 
   res.json({ mensaje: 'Cliente eliminado correctamente.' });
 });

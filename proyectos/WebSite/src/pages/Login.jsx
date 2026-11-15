@@ -1,8 +1,5 @@
 import { useState } from 'react';
-// Datos temporales con la estructura prevista para la tabla de usuarios.
-// Las contraseñas están en texto claro solo para probar la interfaz; se retirarán
-// cuando el inicio de sesión se valide en la API y SQL Server.
-
+import { establecerSesion } from '../api';
 
 function Login({ alIngresar }) {
   const [username, setUsername] = useState('');
@@ -33,6 +30,7 @@ async function ingresar(evento) {
       return;
     }
 
+    establecerSesion(datos.token);
     setPassword('');
     alIngresar(datos.usuario);
 

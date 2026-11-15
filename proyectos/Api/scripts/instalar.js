@@ -135,6 +135,11 @@ const PASOS = [
   ['Limón', 'Proyecto2/Sucursales/verificar_operacion.sql'],
   ['Corporativo', 'Proyecto2/Corporativo/verificar_crud_catalogos.sql'],
 
+  // Contratos de la página sobre las bases distribuidas.
+  ['San José', 'Proyecto2/Api/01_sucursales.sql'],
+  ['Limón', 'Proyecto2/Api/01_sucursales.sql'],
+  ['Corporativo', 'Proyecto2/Api/02_corporativo.sql'],
+
   // 9. Estadísticas: vistas materializadas y SP de los reportes en Corporativo
   ['Corporativo', 'Proyecto2/Estadisticas/01_vistas_materializadas.sql'],
   ['Corporativo', 'Proyecto2/Estadisticas/02_sp_estadisticas.sql'],

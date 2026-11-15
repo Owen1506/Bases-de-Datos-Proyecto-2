@@ -25,4 +25,4 @@ async function conectarCorporativo() {
   return await poolCorporativo.connect();
 }
 
-module.exports = { conectarCorporativo };
+module.exports = { conectarCorporativo, cerrarCorporativo: () => poolCorporativo.close() };

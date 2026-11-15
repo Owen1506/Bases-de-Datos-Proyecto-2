@@ -6,7 +6,9 @@
   "private": true,
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node --watch-path=src src/index.js"
+    "dev": "node --watch-path=src src/index.js",
+    "test:integracion": "node --test test/distribucion.test.js",
+    "actualizar:api": "node scripts/actualizarApi.js"
   },
   "dependencies": {
     "cors": "^2.8.6",

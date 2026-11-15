@@ -40,6 +40,7 @@ function DetalleCliente({ clienteId, alCerrar }) {
 
         <div className="ventana-contenido">
           {error !== '' && <div className="mensaje error">{error}</div>}
+          {cliente && cliente.ContactoDisponible === false && <div className="mensaje info">Los datos de contacto de Corporativo no están disponibles.</div>}
 
           {cliente === null && error === '' && <div className="mensaje">Cargando...</div>}
 
