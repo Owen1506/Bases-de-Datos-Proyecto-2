@@ -36,7 +36,8 @@ function generar() {
     for (const [marcador, valor] of Object.entries(secretos)) {
       sql = sql.replaceAll(marcador, valor.replaceAll("'", "''"));
     }
-    fs.writeFileSync(path.join(sqlRaiz, destino), sql, { mode: 0o600 });
+    // Sin permisos restringidos: el usuario mssql del contenedor debe poder leer el archivo (está en .gitignore)
+    fs.writeFileSync(path.join(sqlRaiz, destino), sql);
   }
 }
 
