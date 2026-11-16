@@ -102,5 +102,4 @@ excluidos de Git. `sa` sigue usándose para instalar, cargar y configurar replic
 seguimiento de clientes y proveedores, rotación estimada y métodos de envío por
 destino. El instalador lo ejecuta después de los reportes 1 al 5. Para bases ya
 instaladas, `npm run actualizar:api` aplica ese archivo y otorga su ejecución a
-`api_corporativo`. El archivo `Script sql/08_sp_reportes_6_10.sql` contiene los
-mismos cinco reportes adaptados a la base original del Proyecto 1.
+`api_corporativo`.

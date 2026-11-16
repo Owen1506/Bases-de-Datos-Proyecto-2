@@ -6,11 +6,7 @@ const { spawnSync } = require('node:child_process');
 const raiz = path.resolve(__dirname, '../../..');
 const docker = spawnSync('docker', ['--version'], { stdio: 'ignore' }).status === 0
   ? 'docker' : 'docker.exe';
-const contenedores = spawnSync(docker, ['ps', '--format', '{{.Names}}'], { encoding: 'utf8' });
-const nombres = new Set((contenedores.stdout || '').trim().split(/\r?\n/));
-const original = nombres.has('sql_wwi') ? 'sql_wwi' : nombres.has('sqlserver_wwi') ? 'sqlserver_wwi' : null;
 const pasos = [
-  ...(original ? [[original, 'WideWorldImporters', '../08_sp_reportes_6_10.sql']] : []),
   ['wwi_sanjose', 'WideWorldImporters_SanJose', 'Sucursales/06_sp_ventas.sql'],
   ['wwi_limon', 'WideWorldImporters_Limon', 'Sucursales/06_sp_ventas.sql'],
   ['wwi_sanjose', 'WideWorldImporters_SanJose', 'Api/01_sucursales.sql'],
