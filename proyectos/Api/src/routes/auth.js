@@ -59,6 +59,10 @@ router.post('/login', async (req, res) => {
     return res.json({ mensaje: 'Inicio de sesión correcto.', usuario: identidad, token: crearSesion(identidad) });
 
   } catch (error) {
+    // Corporativo no responde: mismo aviso 503 que el resto de la API
+    if (error instanceof sql.ConnectionError || ['ESOCKET', 'ECONNCLOSED', 'ETIMEOUT'].includes(error.code)) {
+      return res.status(503).json({ mensaje: 'El nodo Corporativo no está disponible en este momento. Intente más tarde.' });
+    }
     console.error(error);
     return res.status(500).json({ mensaje: 'Error de autenticación.' });
   }
