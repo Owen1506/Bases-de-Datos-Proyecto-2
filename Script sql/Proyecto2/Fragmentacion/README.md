@@ -19,7 +19,7 @@ Los SP conservan parámetros y resultados en español para la API actual. Sus co
 1. Crear las bases con los scripts `../Corporativo/01_crear_bd.sql`, `../SanJose/01_crear_bd.sql` y `../Limon/01_crear_bd.sql`.
 2. Ejecutar `01_catalogo_productos.sql` una vez en **cada** base nueva.
 3. Ejecutar `02_existencias_sucursal.sql` **solo** en San José y Limón. En una base nueva incluye `SucursalID`; para migrar una base anterior se usa el archivo 16.
-4. Antes de `16_inventario_nodos.sql`, `03_verificar_estructura.sql` indica que solo las sucursales tienen `Warehouse.StockItemHoldings`. Despues de ejecutar ese archivo, la tabla existe en los tres nodos. La comprobacion completa de la estructura se documentara cuando esten preparadas todas las tablas.
+4. Después de `16_inventario_nodos.sql`, `Warehouse.StockItemHoldings` existe en los tres nodos: en las sucursales con su inventario y en Corporativo como copia consolidada.
 
 Los scripts de estructura son repetibles: crean los objetos que faltan y no borran datos. No cambian los procedimientos del Proyecto 1 ni crean publicaciones o suscripciones. No insertar datos de prueba en estas tablas antes de la carga inicial.
 
