@@ -10,20 +10,27 @@ const inventario = require('./routes/inventario');
 const ventas = require('./routes/ventas');
 const catalogos = require('./routes/catalogos');
 const estadisticas = require('./routes/estadisticas');
+const auth = require('./routes/auth');
 
+const { autenticar, permitirRol } = require('./sesion');
+const { estadoNodos } = require('./dbNodos');
 const app = express();
 const PUERTO = 3000;
 
 app.use(cors());
 app.use(express.json()); // para leer el cuerpo JSON de los POST y PUT
 
-app.use('/api/clientes', clientes);
-app.use('/api/proveedores', proveedores);
-app.use('/api/inventario', inventario);
-app.use('/api/ventas', ventas);
-app.use('/api/catalogos', catalogos);
-app.use('/api/estadisticas', estadisticas);
-
+app.use('/api/clientes', autenticar, permitirRol('Administrador'), clientes);
+app.use('/api/proveedores', autenticar, permitirRol('Administrador'), proveedores);
+app.use('/api/inventario', autenticar, permitirRol('Administrador'), inventario);
+app.use('/api/ventas', autenticar, permitirRol('Administrador'), ventas);
+app.use('/api/catalogos', autenticar, permitirRol('Administrador'), catalogos);
+app.use('/api/estadisticas', autenticar, permitirRol('Corporativo'), estadisticas);
+app.use('/api/auth', auth);
+// Qué nodos responden; no pide sesión porque no devuelve datos
+app.get('/api/estado', async (req, res) => {
+  res.json(await estadoNodos());
+});
 // Ruta no encontrada
 app.use((req, res) => {
   res.status(404).json({ mensaje: 'Ruta no encontrada.' });
@@ -31,6 +38,11 @@ app.use((req, res) => {
 
 // Si algo falla en una ruta (por ejemplo la base no responde) cae aqui
 app.use((err, req, res, next) => {
+  // Errores con estado propio, por ejemplo un nodo que no responde (503)
+  if (err.estado) {
+    return res.status(err.estado).json({ mensaje: err.message });
+  }
+
   // Los errores de los SP con THROW 50001, 50002... traen un mensaje para el usuario
   if (err.number >= 50000) {
     return res.status(400).json({ mensaje: err.message });
@@ -40,6 +52,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ mensaje: 'Ocurrió un error al consultar la base de datos.' });
 });
 
-app.listen(PUERTO, () => {
+if (require.main === module) app.listen(PUERTO, () => {
   console.log('API escuchando en http://localhost:' + PUERTO);
 });
+
+module.exports = app;

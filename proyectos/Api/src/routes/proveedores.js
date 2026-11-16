@@ -1,7 +1,8 @@
 const express = require('express');
-const { ejecutarSP } = require('../db');
+const { ejecutarSPCorporativo, ejecutarSPSucursal } = require('../dbNodos');
 const { esEntero, vacio } = require('../validar');
 
+const { completarDetalle } = require('../detalleDistribuido');
 const router = express.Router();
 
 // GET /api/proveedores?nombre=&categoriaId=&pagina=
@@ -22,7 +23,7 @@ router.get('/', async (req, res) => {
     categoriaId = Number(categoriaId);
   }
 
-  const filas = await ejecutarSP('dbo.usp_Proveedores_Listar', {
+  const filas = await ejecutarSPSucursal(req.usuario.SucursalID, 'dbo.usp_Proveedores_Listar', {
     Nombre: nombre,
     CategoriaID: categoriaId,
     Pagina: Number(pagina)
@@ -37,7 +38,7 @@ router.get('/:id', async (req, res) => {
     return res.status(400).json({ mensaje: 'El código del proveedor debe ser un número entero.' });
   }
 
-  const filas = await ejecutarSP('dbo.usp_Proveedores_Detalle', {
+  const filas = await ejecutarSPSucursal(req.usuario.SucursalID, 'dbo.usp_Api_Proveedores_Publico', {
     ProveedorID: Number(req.params.id)
   });
 
@@ -45,7 +46,7 @@ router.get('/:id', async (req, res) => {
     return res.status(404).json({ mensaje: 'No existe un proveedor con ese código.' });
   }
 
-  res.json(filas[0]);
+  res.json(await completarDetalle('Proveedores', filas[0]));
 });
 
 // ---------- Insertar, actualizar y eliminar ----------
@@ -140,7 +141,7 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ mensaje: error });
   }
 
-  const filas = await ejecutarSP('dbo.usp_Proveedores_Insertar', parametrosProveedor(req.body));
+  const filas = await ejecutarSPCorporativo('dbo.usp_Api_Proveedores_Guardar', parametrosProveedor(req.body));
 
   res.status(201).json({ ProveedorID: filas[0].ProveedorID, mensaje: 'Proveedor creado correctamente.' });
 });
@@ -159,7 +160,7 @@ router.put('/:id', async (req, res) => {
   const parametros = parametrosProveedor(req.body);
   parametros.ProveedorID = Number(req.params.id);
 
-  await ejecutarSP('dbo.usp_Proveedores_Actualizar', parametros);
+  await ejecutarSPCorporativo('dbo.usp_Api_Proveedores_Guardar', parametros);
 
   res.json({ mensaje: 'Proveedor actualizado correctamente.' });
 });
@@ -170,7 +171,7 @@ router.delete('/:id', async (req, res) => {
     return res.status(400).json({ mensaje: 'El código del proveedor debe ser un número entero.' });
   }
 
-  await ejecutarSP('dbo.usp_Proveedores_Eliminar', { ProveedorID: Number(req.params.id) });
+  await ejecutarSPCorporativo('dbo.usp_Proveedores_Eliminar', { ProveedorID: Number(req.params.id) });
 
   res.json({ mensaje: 'Proveedor eliminado correctamente.' });
 });

@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { consultar, enviar } from '../api';
 import Buscador from '../components/Buscador';
 import DetalleProducto from '../components/DetalleProducto';
+import FormularioExistencias from '../components/FormularioExistencias';
 import FormularioProducto from '../components/FormularioProducto';
 import Paginacion from '../components/Paginacion';
-import { ICONO_BASURERO, ICONO_LAPIZ } from '../components/Iconos';
+import { ICONO_BASURERO, ICONO_CAJA, ICONO_LAPIZ } from '../components/Iconos';
 
 // Cantidad de productos por pagina. Debe ser igual al @TamanoPagina del SP.
 const TAMANO_PAGINA = 10;
@@ -37,6 +38,7 @@ function Inventario() {
 
   const [formularioAbierto, setFormularioAbierto] = useState(false);
   const [productoEditarId, setProductoEditarId] = useState(null); // null = producto nuevo
+  const [existenciasId, setExistenciasId] = useState(null); // null = ventana de inventario cerrada
   const [exito, setExito] = useState('');
 
   async function cargarGrupos() {
@@ -141,9 +143,15 @@ function Inventario() {
     setFormularioAbierto(true);
   }
 
-  // Cuando el formulario guarda bien: se cierra, se muestra el mensaje y se recarga la tabla
+  function abrirExistencias(evento, id) {
+    evento.stopPropagation(); // evita que el clic tambien abra el detalle
+    setExistenciasId(id);
+  }
+
+  // Cuando un formulario guarda bien: se cierra, se muestra el mensaje y se recarga la tabla
   function alGuardar(mensaje) {
     setFormularioAbierto(false);
+    setExistenciasId(null);
     setExito(mensaje);
     buscar(filtrosAplicados, pagina);
   }
@@ -171,7 +179,7 @@ function Inventario() {
       <div className="titulo-modulo">
         <div>
           <h2>Inventario</h2>
-          <p className="descripcion">Busque productos y haga clic en uno para ver su detalle.</p>
+          <p className="descripcion">Busque productos y haga clic en uno para ver su detalle. Las cantidades son de su sucursal.</p>
         </div>
         <button className="boton" onClick={abrirNuevo}>+ Nuevo producto</button>
       </div>
@@ -255,6 +263,9 @@ function Inventario() {
                       <td className="numero">{p.CantidadDisponible.toLocaleString()}</td>
                       {/* estos botones solo se ven al pasar el mouse por la fila (ver styles/tabla.css) */}
                       <td className="acciones">
+                        <button className="boton-icono" title="Inventario de la sucursal" onClick={(e) => abrirExistencias(e, p.ProductoID)}>
+                          {ICONO_CAJA}
+                        </button>
                         <button className="boton-icono" title="Editar" onClick={(e) => abrirEditar(e, p.ProductoID)}>
                           {ICONO_LAPIZ}
                         </button>
@@ -288,6 +299,14 @@ function Inventario() {
         <FormularioProducto
           productoId={productoEditarId}
           alCerrar={() => setFormularioAbierto(false)}
+          alGuardar={alGuardar}
+        />
+      )}
+
+      {existenciasId !== null && (
+        <FormularioExistencias
+          productoId={existenciasId}
+          alCerrar={() => setExistenciasId(null)}
           alGuardar={alGuardar}
         />
       )}

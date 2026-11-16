@@ -1,5 +1,5 @@
 const express = require('express');
-const { ejecutarSP } = require('../db');
+const { ejecutarSPCorporativo, ejecutarSPSucursal } = require('../dbNodos');
 const { esEntero, vacio } = require('../validar');
 
 const router = express.Router();
@@ -49,7 +49,7 @@ router.get('/', async (req, res) => {
   }
 
   // los rangos (fecha inicial <= final, monto minimo <= maximo) los revisa el SP
-  const filas = await ejecutarSP('dbo.usp_Ventas_Listar', {
+  const filas = await ejecutarSPSucursal(req.usuario.SucursalID, 'dbo.usp_Ventas_Listar', {
     NombreCliente: cliente,
     FechaInicio: fechaInicio,
     FechaFin: fechaFin,
@@ -67,15 +67,16 @@ router.get('/:id', async (req, res) => {
     return res.status(400).json({ mensaje: 'El número de factura debe ser un número entero.' });
   }
 
-  const encabezado = await ejecutarSP('dbo.usp_Ventas_Detalle', { FacturaID: Number(req.params.id) });
-
-  if (encabezado.length === 0) {
+  const resultado = await ejecutarSPSucursal(req.usuario.SucursalID,
+    'dbo.usp_Ventas_Detalle', { FacturaID: Number(req.params.id) }, req.usuario, true);
+  if (!resultado.recordsets[0]?.length) {
     return res.status(404).json({ mensaje: 'No existe una factura con ese número.' });
   }
-
-  const lineas = await ejecutarSP('dbo.usp_Ventas_DetalleLineas', { FacturaID: Number(req.params.id) });
-
-  res.json({ encabezado: encabezado[0], lineas: lineas });
+  const encabezado = resultado.recordsets[0][0];
+  const lineas = resultado.recordsets[1] || [];
+  const { completarContactoVenta } = require('../detalleDistribuido');
+  await completarContactoVenta(encabezado);
+  res.json({ encabezado, lineas });
 });
 
 // ---------- Insertar, actualizar y eliminar ----------
@@ -124,9 +125,9 @@ function parametrosVenta(v) {
     ContactoID: Number(v.ContactoID),
     VendedorID: Number(v.VendedorID),
     Fecha: v.Fecha,
-    NumeroOrdenCliente: textoOpcional(v.NumeroOrdenCliente),
+    OrdenCompraCliente: textoOpcional(v.NumeroOrdenCliente),
     InstruccionesEntrega: textoOpcional(v.InstruccionesEntrega),
-    Detalles: JSON.stringify(lineas)
+    LineasJson: JSON.stringify(lineas)
   };
 }
 
@@ -137,7 +138,7 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ mensaje: error });
   }
 
-  const filas = await ejecutarSP('dbo.usp_Ventas_Insertar', parametrosVenta(req.body));
+  const filas = await ejecutarSPSucursal(req.usuario.SucursalID, 'dbo.usp_Ventas_Insertar', parametrosVenta(req.body), req.usuario);
 
   res.status(201).json({ FacturaID: filas[0].FacturaID, mensaje: 'Factura #' + filas[0].FacturaID + ' creada correctamente.' });
 });
@@ -156,7 +157,7 @@ router.put('/:id', async (req, res) => {
   const parametros = parametrosVenta(req.body);
   parametros.FacturaID = Number(req.params.id);
 
-  await ejecutarSP('dbo.usp_Ventas_Actualizar', parametros);
+  await ejecutarSPSucursal(req.usuario.SucursalID, 'dbo.usp_Ventas_Actualizar', parametros, req.usuario);
 
   res.json({ mensaje: 'Factura actualizada correctamente.' });
 });
@@ -167,7 +168,7 @@ router.delete('/:id', async (req, res) => {
     return res.status(400).json({ mensaje: 'El número de factura debe ser un número entero.' });
   }
 
-  await ejecutarSP('dbo.usp_Ventas_Eliminar', { FacturaID: Number(req.params.id) });
+  await ejecutarSPSucursal(req.usuario.SucursalID, 'dbo.usp_Ventas_Eliminar', { FacturaID: Number(req.params.id) }, req.usuario);
 
   res.json({ mensaje: 'Factura eliminada correctamente.' });
 });

@@ -38,6 +38,7 @@ function DetalleProveedor({ proveedorId, alCerrar }) {
 
         <div className="ventana-contenido">
           {error !== '' && <div className="mensaje error">{error}</div>}
+          {proveedor && proveedor.ContactoDisponible === false && <div className="mensaje info">Los datos de contacto de Corporativo no están disponibles.</div>}
 
           {proveedor === null && error === '' && <div className="mensaje">Cargando...</div>}
 

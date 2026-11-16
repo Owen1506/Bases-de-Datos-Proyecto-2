@@ -4,6 +4,7 @@ import ReporteVentasClientes from './reportes/ReporteVentasClientes';
 import ReporteProductosGanancia from './reportes/ReporteProductosGanancia';
 import ReporteClientesFacturas from './reportes/ReporteClientesFacturas';
 import ReporteProveedoresOrdenes from './reportes/ReporteProveedoresOrdenes';
+import ReporteNuevo from './reportes/ReporteNuevo';
 import '../styles/estadisticas.css';
 
 const REPORTES = [
@@ -29,38 +30,27 @@ const COMPONENTES = {
 
 function Estadisticas() {
   const [reporteActivo, setReporteActivo] = useState(null);
-  const ReporteActivo = COMPONENTES[reporteActivo];
+  const ReporteActivo = COMPONENTES[reporteActivo] || (reporteActivo >= 6 ? ReporteNuevo : null);
 
   if (ReporteActivo) {
-    return <ReporteActivo alVolver={() => setReporteActivo(null)} />;
+    return <ReporteActivo tipo={reporteActivo} alVolver={() => setReporteActivo(null)} />;
   }
 
   return (
     <>
       <h2>Estadísticas</h2>
-      <p className="descripcion">Seleccione un reporte para consultar sus datos.</p>
+      <p className="descripcion">Seleccione un reporte para consultar sus datos. Cada reporte se puede ver por sucursal o consolidado.</p>
       <div className="catalogo-reportes">
         {REPORTES.map((reporte) => (
-          COMPONENTES[reporte.id] ? (
-            <button key={reporte.id} type="button" className="panel reporte-tarjeta disponible"
-              onClick={() => setReporteActivo(reporte.id)}>
-              <span className="reporte-numero">{String(reporte.id).padStart(2, '0')}</span>
-              <span className="reporte-tarjeta-texto">
-                <strong>{reporte.titulo}</strong>
-                <span>{reporte.descripcion}</span>
-              </span>
-              <span className="reporte-estado">Abrir reporte <span aria-hidden="true">→</span></span>
-            </button>
-          ) : (
-            <div key={reporte.id} className="panel reporte-tarjeta pendiente">
-              <span className="reporte-numero">{String(reporte.id).padStart(2, '0')}</span>
-              <span className="reporte-tarjeta-texto">
-                <strong>{reporte.titulo}</strong>
-                <span>{reporte.descripcion}</span>
-              </span>
-              <span className="reporte-estado">Pendiente</span>
-            </div>
-          )
+          <button key={reporte.id} type="button" className="panel reporte-tarjeta disponible"
+            onClick={() => setReporteActivo(reporte.id)}>
+            <span className="reporte-numero">{String(reporte.id).padStart(2, '0')}</span>
+            <span className="reporte-tarjeta-texto">
+              <strong>{reporte.titulo}</strong>
+              <span>{reporte.descripcion}</span>
+            </span>
+            <span className="reporte-estado">Abrir reporte <span aria-hidden="true">→</span></span>
+          </button>
         ))}
       </div>
     </>

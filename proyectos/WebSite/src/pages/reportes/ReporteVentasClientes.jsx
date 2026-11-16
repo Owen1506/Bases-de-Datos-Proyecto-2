@@ -1,13 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { consultar } from '../../api';
 import { formatoMonto } from '../../formato';
+import Buscador from '../../components/Buscador';
 import Paginacion from '../../components/Paginacion';
+import SelectorSucursal from '../../components/SelectorSucursal';
 
 const TAMANO_PAGINA = 10;
 
 function ReporteVentasClientes({ alVolver }) {
+  const [sucursal, setSucursal] = useState('');
   const [nombreCliente, setNombreCliente] = useState('');
   const [categoria, setCategoria] = useState('');
+  const [categorias, setCategorias] = useState([]);
+  // cambia al restaurar los filtros, para vaciar el buscador de nombre
+  const [reinicios, setReinicios] = useState(0);
   const [filas, setFilas] = useState([]);
   const [pagina, setPagina] = useState(1);
   const [total, setTotal] = useState(0);
@@ -20,6 +26,7 @@ function ReporteVentasClientes({ alVolver }) {
     const solicitud = ++solicitudActual.current;
     const parametros = new URLSearchParams();
     parametros.set('pagina', numeroPagina);
+    if (filtros.sucursal) parametros.set('sucursal', filtros.sucursal);
     if (filtros.nombreCliente?.trim()) parametros.set('nombreCliente', filtros.nombreCliente.trim());
     if (filtros.categoria?.trim()) parametros.set('categoria', filtros.categoria.trim());
 
@@ -45,18 +52,22 @@ function ReporteVentasClientes({ alVolver }) {
   }
 
   useEffect(() => {
+    // si falla, la lista de categorías queda vacía y el reporte funciona igual
+    consultar('/catalogos/categorias-cliente').then(setCategorias).catch(() => setCategorias([]));
     buscar();
     return () => { solicitudActual.current += 1; };
   }, []);
 
   function alBuscar(evento) {
     evento.preventDefault();
-    buscar({ nombreCliente, categoria });
+    buscar({ sucursal, nombreCliente, categoria });
   }
 
   function restaurar() {
+    setSucursal('');
     setNombreCliente('');
     setCategoria('');
+    setReinicios(reinicios + 1);
     buscar();
   }
 
@@ -72,17 +83,26 @@ function ReporteVentasClientes({ alVolver }) {
       <div className="modulo-columnas">
         <form className="panel panel-filtros" onSubmit={alBuscar}>
           <h3>Filtros del reporte</h3>
-          <label>
-            Nombre del cliente
-            <input type="text" value={nombreCliente} maxLength={100}
-              placeholder="Escriba parte del nombre"
-              onChange={(e) => setNombreCliente(e.target.value)} />
-          </label>
+          <SelectorSucursal valor={sucursal} alCambiar={setSucursal} />
+          {/* Texto libre con sugerencias: no hace falta elegir una, se busca con lo escrito */}
+          <Buscador
+            key={reinicios}
+            etiqueta="Nombre del cliente"
+            ruta="/catalogos/clientes"
+            campoId="ClienteID"
+            campoTexto="Cliente"
+            textoInicial=""
+            placeholder="Escriba parte del nombre"
+            alElegir={(id, texto) => setNombreCliente(texto)}
+          />
           <label>
             Categoría del cliente
-            <input type="text" value={categoria} maxLength={100}
-              placeholder="Escriba parte de la categoría"
-              onChange={(e) => setCategoria(e.target.value)} />
+            <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+              <option value="">Todas</option>
+              {categorias.map((c) => (
+                <option key={c.CategoriaID} value={c.Categoria}>{c.Categoria}</option>
+              ))}
+            </select>
           </label>
           <button className="boton" type="submit" disabled={cargando}>Consultar</button>
           <button className="boton secundario" type="button" onClick={restaurar} disabled={cargando}>
