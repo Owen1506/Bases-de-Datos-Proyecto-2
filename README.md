@@ -1,210 +1,122 @@
 Instituto Tecnológico de Costa Rica
 
-Proyecto 1 – Bases de Datos 2
+Proyecto 2 – Bases de Datos II
 
-Profesor:
-  Cristian Paz Campos Aguero
+**Profesor:** Cristian Paz Campos Agüero
 
-Estudiantes:
-  Elian J. Trejos Quirós - 2024143262
-  Owen Smith Cerdas - 2024083328
-
-II Semestre, 2026
-
----
-
-# Sitio web WideWorldImporters - SQL Server + Node.js + React
-
-La configuración de los tres contenedores del Proyecto 2 está documentada en [Script sql/Proyecto2/README.md](Script%20sql/Proyecto2/README.md).
-
-## Ejecución del Proyecto 2
-
-La API utiliza los nodos distribuidos: consultas y ventas en la sucursal del usuario;
-escrituras compartidas y datos sensibles en Corporativo. La base original se conserva
-como origen de migración, pero ya no se consulta desde las rutas de la aplicación.
-
-Para una instalación nueva, preparar `.env`, el respaldo y las dependencias; ejecutar
-`node scripts/instalar.js` desde `proyectos/Api`. El instalador incluye los procedimientos
-de compatibilidad de `Script sql/Proyecto2/Api/`.
-
-**Si las bases ya están instaladas, no repetir la restauración ni la carga.** Desde
-`proyectos/Api`, aplicar únicamente:
-
-```bash
-npm run actualizar:api
-node scripts/configurarSeguridad.js
-npm start
-```
-
-Las contraseñas MSSQL del `.env` deben
-coincidir con las instancias ya creadas; editar `.env` no cambia la contraseña del servidor.
-
-En otra terminal, desde `proyectos/WebSite`, ejecutar `npm run dev` y abrir
-http://localhost:5173. Reiniciar la API y volver a ingresar después de actualizar.
-
-El login devuelve un token que la página mantiene en memoria. La API valida sesión y
-rol en cada petición y obtiene de ella la sucursal; no confía en `X-Sucursal`.
-Las sesiones duran ocho horas, se invalidan al cerrar sesión y se pierden al reiniciar
-la API. Los detalles públicos siguen disponibles si Corporativo falla, con un aviso
-sobre los contactos privados no disponibles. Editar esos detalles requiere Corporativo.
-
-La API usa cuentas SQL separadas para el login, la administración, los reportes y las
-sucursales. `sa` se reserva para instalación, carga y agentes de replicación. Esta
-actualización no verifica la propagación de la replicación ni su
-recuperación después de una caída.
-
-Las instrucciones siguientes describen la instalación manual original del Proyecto 1.
-
-### Integrantes
+**Estudiantes:**
 - Elian J. Trejos Quirós - 2024143262
 - Owen Smith Cerdas - 2024083328
 
-### Enlace del video
-https://youtu.be/6pdkmnrEXSs
+II semestre, 2026
 
 ---
 
+# Sitio web Wide World Importers - Base de datos distribuida
+
 ## Introducción
 
-Sitio web para consultar y gestionar la base de datos de ejemplo **WideWorldImporters** de Microsoft.
-
-- Todo el procesamiento de datos (filtros, orden, paginación, cálculos y estadísticas) se hace en
-  **SQL Server** mediante **stored procedures**. La API y la página solo envían parámetros y muestran
-  los resultados.
-- Los stored procedures acceden a las tablas únicamente por medio de **sinónimos** (esquema `syn`).
-- Los INSERT, UPDATE y DELETE usan **BEGIN TRANSACTION / COMMIT / ROLLBACK**.
-
-Tecnologías: SQL Server 2022 en Docker (WSL2), API en Node.js + Express, sitio web en React + Vite.
+Aplicación web para administrar las operaciones de dos sucursales, San José y Limón, y consultar sus estadísticas desde Corporativo. Conserva los módulos del Proyecto 1 y distribuye los datos entre tres instancias de SQL Server 2022 en contenedores Docker. La instancia del Proyecto 1 se usa únicamente como fuente de la carga inicial.
 
 ## Objetivos alcanzados
 
-- **Clientes:** listado con filtros acumulativos (nombre por texto libre, categoría y método de entrega),
-  restaurar filtros, orden alfabético, paginación, ventana de detalle con mapa y CRUD.
-- **Proveedores:** listado con filtros (nombre y categoría), detalle con mapa, banco y cuenta, y CRUD.
-- **Inventario:** listado con filtros (nombre, grupo y rango de cantidad), detalle con enlace al
-  proveedor y CRUD.
-- **Ventas:** listado con filtros (cliente, rango de fechas y rango de montos), detalle de la factura
-  con encabezado y líneas, enlaces al cliente y a los productos, y CRUD.
-- **Reportes 1 al 10:** compras y ventas con ROLLUP; top 5 con DENSE_RANK;
-  matriz de ventas por categoría y año; seguimiento mensual de clientes y proveedores;
-  rotación estimada de inventario; y métodos de envío por destino. Todos admiten filtro
-  por sucursal o consolidado en el Proyecto 2.
-- Validaciones en la página, en la API y en los stored procedures, con mensajes de error claros.
+| Requisito | Implementación en el repositorio |
+| --- | --- |
+| Sistema web y API | React + Vite y Node.js + Express. Incluye inicio de sesión, clientes, proveedores, productos, inventario, facturas y diez reportes. |
+| Fragmentación y asignación | Catálogos públicos en los tres nodos; inventario y facturación propios de cada sucursal; datos de contacto y privacidad de clientes y proveedores solo en Corporativo. |
+| Replicación | Scripts de replicación transaccional de Corporativo a las sucursales para catálogos, y de cada sucursal a Corporativo para facturas, órdenes e inventario. |
+| Estadísticas | Diez reportes con filtro San José, Limón o consolidado. Tres vistas indexadas en Corporativo resumen facturas, órdenes y ganancia por producto. |
+| Concurrencia | El catálogo de productos se escribe en Corporativo, con control de versión para modificaciones. Las ventas y los cambios de inventario usan transacciones y bloqueos. |
+| Seguridad | Tabla de usuarios, roles y sucursal asignada; hashes `scrypt` cifrados mediante clave simétrica AES-256 de SQL Server. Cuentas SQL de la API separadas por función. |
+| Fallo de nodo | La API informa indisponibilidad con HTTP 503; los detalles públicos de una sucursal pueden consultarse sin Corporativo, con aviso para los datos privados. Hay un guion de demostración de caída y recuperación. |
 
-### Criterios de los reportes 6 al 10
+## Objetivos no alcanzados y limitaciones
 
-- WWI no incluye una jerarquía de subcategorías: se usa el grupo de producto como categoría
-  y el producto como filtro más específico. Un producto con varios grupos aparece en cada
-  grupo de la matriz; los demás reportes usan `EXISTS` para no duplicar sus líneas.
-- El seguimiento de proveedores utiliza fechas de órdenes de compra y cantidades en
-  empaques externos. Los mínimos y máximos de los seguimientos son cantidades por línea.
-- Los días de rotación son una estimación: `365 × existencias actuales ÷ unidades vendidas
-  en el año`. No se dispone de saldos históricos para calcular la rotación exacta de cada año.
-- El destino del envío se toma de la ciudad de entrega actual del cliente; la factura no
-  guarda una ciudad de destino histórica.
+**Pendiente identificado:** los sinónimos de datos privados en las sucursales apuntan a un servidor vinculado `wwi_corporativo`, pero el instalador no crea ese servidor vinculado. La API obtiene los detalles privados mediante una conexión directa a Corporativo, así que su flujo de detalle no depende de esos sinónimos; las consultas directas a los procedimientos SQL de detalle de sucursal requieren configurar el servidor vinculado y sus permisos.
+
+## Arquitectura y decisiones de distribución
+
+| Datos | San José | Limón | Corporativo | Motivo |
+| --- | --- | --- | --- | --- |
+| Productos, grupos, clientes, proveedores y referencias públicas | Copia de lectura | Copia de lectura | Escritura principal | Cada sucursal consulta y vende con catálogos locales; una sola autoridad evita conflictos de edición entre nodos. |
+| Existencias | Escritura de San José | Escritura de Limón | Copia de ambas | Cada tienda controla su inventario; Corporativo calcula el total a partir de las dos filas identificadas por `SucursalID`. |
+| Facturas, líneas y órdenes de compra | Escritura de San José | Escritura de Limón | Copia de ambas | Las operaciones continúan en el nodo de la sucursal y se consolidan para reportes. La clave compuesta con `SucursalID` evita choques de números locales. |
+| Contactos, direcciones, teléfonos y datos bancarios privados | Sin tabla privada | Sin tabla privada | Escritura y almacenamiento | Los datos sensibles permanecen centralizados; la API los consulta en Corporativo al mostrar detalles. |
+| Usuarios y estadísticas | — | — | Almacenamiento y consulta | Corporativo autentica y reúne la información de ambas sucursales. |
+
+La carga inicial divide las existencias originales: San José recibe `ceil(cantidad/2)` y Limón `floor(cantidad/2)`. Es una asignación inicial porque la base fuente no distingue sucursales; después cada tienda mantiene su propio saldo. Los productos se crean, modifican y eliminan en Corporativo; la replicación distribuye el cambio. Los datos privados no se incluyen en los artículos de replicación.
+
+Los tres nodos usan **SQL Server 2022 Developer** en contenedores independientes, con volúmenes propios y la red `wwi_red`. Esta implementación conserva el mismo motor en ambas sucursales. La distribución es lógica y física entre instancias; no demuestra interoperabilidad entre motores de base de datos distintos.
+
+| Nodo | Contenedor | Puerto local | Base de datos |
+| --- | --- | --- | --- |
+| San José | `wwi_sanjose` | 1434 | `WideWorldImporters_SanJose` |
+| Limón | `wwi_limon` | 1435 | `WideWorldImporters_Limon` |
+| Corporativo | `wwi_corporativo` | 1436 | `WideWorldImporters_Corporativo` |
+| Origen del Proyecto 1 | `sql_wwi` | 1433 | `WideWorldImporters` |
+
+## Funcionalidad
+
+- **Administrador:** ingresa con una sucursal asignada; consulta y gestiona clientes, proveedores, productos y facturas. Consulta y ajusta existencias de su sucursal. Las escrituras compartidas de clientes, proveedores y productos pasan por Corporativo; las ventas y existencias se escriben localmente.
+- **Corporativo:** consulta los diez reportes con filtro por sucursal o consolidado. Los reportes cubren compras a proveedores, ventas por cliente, productos con mayor ganancia, clientes con más facturas, proveedores con más órdenes, matriz de ventas por categoría y año, seguimientos de clientes y proveedores, rotación estimada y métodos de envío por destino.
+- **Sesión:** el token se mantiene en memoria del navegador; la API valida rol y sucursal en cada solicitud. La sesión dura ocho horas, termina al cerrar sesión y se pierde al reiniciar la API o recargar la página.
+
+La tabla `dbo.Usuarios` contiene `iduser`, `username`, `password`, `fullname`, `active`, `rol`, `email`, `hiredate` y `SucursalID`. La contraseña ingresada se compara en la API con un hash `scrypt` con sal; ese hash se almacena cifrado en SQL Server mediante `EncryptByKey`, certificado y clave simétrica AES-256. `api_login`, `api_administrador`, `api_corporativo` y `api_sucursal` tienen permisos SQL separados. `sa` se reserva para instalación, carga y agentes de replicación.
 
 ## Requisitos
 
-- Windows con WSL2 (Ubuntu)
-- Docker Desktop con integración WSL2
-- Node.js v20
-- Archivo `WideWorldImporters-Full.bak` (https://github.com/Microsoft/sql-server-samples/releases/tag/wide-world-importers-v1.0)
+- Docker con Compose.
+- Node.js 20.19+ o 22.12+.
+- Respaldo `WideWorldImporters-Full.bak` de Microsoft SQL Server Samples.
 
-## Instalación
+## Instalación desde cero
 
-### 1. Configurar la contraseña
+Se necesita Docker con Compose, Node.js 20.19+ o 22.12+ y el respaldo `WideWorldImporters-Full.bak` de [Microsoft SQL Server Samples](https://github.com/Microsoft/sql-server-samples/releases/tag/wide-world-importers-v1.0). Los comandos se ejecutan desde la raíz del repositorio, salvo donde se indica otra carpeta.
 
-```bash
-cp .env.example .env
-```
+1. Copiar `.env.example` a `.env` y reemplazar **todas** las contraseñas de ejemplo: las cuatro de SQL Server, la clave maestra, las tres cuentas de demostración y las cuatro cuentas SQL de la API. Usar las contraseñas originales de `sa` si los volúmenes de Docker ya existen.
+2. Guardar el respaldo como `backups/WideWorldImporters-Full.bak`. La carpeta `backups/` y `.env` están excluidos de Git.
+3. Instalar dependencias y ejecutar el instalador en una **instalación nueva**:
 
-Editar `.env` y poner la contraseña del usuario `sa` en `MSSQL_SA_PASSWORD`.
+   ```bash
+   cd proyectos/Api
+   npm ci
+   node scripts/instalar.js
+   ```
 
-### 2. Levantar SQL Server
+   El instalador inicia los contenedores, restaura el origen, crea y carga los tres nodos, instala procedimientos, vistas y cuentas, y configura la replicación al final. Si se detiene, corregir el error y continuar con `node scripts/instalar.js NUMERO_DE_PASO`, usando el número que muestra en pantalla. **No repetir desde el inicio sobre bases ya pobladas.**
 
-Copiar `WideWorldImporters-Full.bak` en la carpeta `backups/` y luego:
+4. Iniciar la API y el sitio web en terminales distintas:
 
-```bash
-docker compose up -d
-```
+   ```bash
+   # Desde proyectos/Api
+   npm start
+   ```
 
-### 3. Restaurar la base y crear los stored procedures
+   ```bash
+   # Desde proyectos/WebSite
+   npm ci
+   npm run dev
+   ```
 
-Ejecutar los scripts en orden:
+Abrir [http://localhost:5173](http://localhost:5173). La API escucha en `http://localhost:3000`. Las cuentas de ejemplo son `admin_sj`, `admin_limon` y `gerente`; sus contraseñas son las definidas en `.env` como `CLAVE_ADMIN_SJ`, `CLAVE_ADMIN_LIMON` y `CLAVE_GERENTE`. El instalador crea archivos `.local.sql` con secretos, excluidos de Git.
 
-```bash
-for f in 00_restore_wwi 01_sinonimos 02_sp_catalogos 03_sp_clientes 04_sp_proveedores 05_sp_inventario 06_sp_ventas 07_sp_estadisticas; do
-  docker exec sql_wwi bash -c "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"\$MSSQL_SA_PASSWORD\" -C -i /scripts/$f.sql"
-done
-```
+Para **bases ya instaladas**, desde `proyectos/Api` se puede actualizar el contrato de procedimientos con `npm run actualizar:api`, configurar las cuentas SQL con `node scripts/configurarSeguridad.js` y reiniciar la API. Estos comandos no restauran ni recargan las bases. El procedimiento detallado de nodos y usuarios está en [la guía de SQL](Script%20sql/Proyecto2/README.md).
 
-| Script | Contenido |
-|---|---|
-| `00_restore_wwi.sql` | Restaura WideWorldImporters |
-| `01_sinonimos.sql` | Sinónimos de las tablas (esquema `syn`) |
-| `02_sp_catalogos.sql` | Catálogos y buscadores para los filtros y formularios |
-| `03` a `06` | Stored procedures de clientes, proveedores, inventario y ventas |
-| `07_sp_estadisticas.sql` | Stored procedures de los reportes |
-| `99_ejemplos_ejecucion.sql` | Ejemplos de ejecución de todos los stored procedures usados por la aplicación |
+## Comprobación y demostración presencial
 
-### 4. Levantar la API (puerto 3000)
+1. Consultar `http://localhost:3000/api/estado`: debe indicar que responden Corporativo, San José y Limón. Ingresar como cada administrador y como gerente para verificar los permisos y las vistas correspondientes.
+2. Crear, modificar y eliminar un producto desde un administrador; consultar después el catálogo en ambas sucursales. La propagación es asíncrona y puede tardar unos segundos. Cambiar existencias de una sucursal y comprobar que el saldo de la otra permanece independiente y que Corporativo ve ambas filas.
+3. Crear una factura en una sucursal y comprobar su copia y el reporte consolidado en Corporativo. Filtrar un reporte por cada sucursal y por consolidado.
+4. Usar [el guion de replicación](Script%20sql/Proyecto2/Replicacion/06_demo.sql) y [el guion de caída de nodo](Script%20sql/Proyecto2/Replicacion/07_demo_falla.sql) para comprobar propagación, consultas durante una falla y entrega de cambios al recuperar el nodo. Los valores de ejemplo del guion deben revisarse contra los datos actuales antes de ejecutarlo porque modifica filas.
 
-```bash
-cd proyectos/Api
-npm install
-npm start
-```
-
-### 5. Levantar el sitio web (puerto 5173)
-
-En otra terminal:
-
-```bash
-cd proyectos/WebSite
-npm install
-npm run dev
-```
-
-Abrir http://localhost:5173
-
-### Inicio de sesión (Proyecto 2, en desarrollo)
-
-La página abre en el formulario de ingreso. El formulario llama a `POST /api/auth/login`;
-la API valida las credenciales contra `dbo.Usuarios` en Corporativo. Para reproducir
-la base y crear los usuarios de prueba, seguir el orden indicado en la
-[documentación de los nodos](Script%20sql/Proyecto2/README.md). Configurar
-las cuatro variables `API_*_PASSWORD` en el `.env` de la raíz. El instalador crea
-los logins SQL y sus permisos después de instalar los procedimientos. En bases ya
-instaladas, ejecutar `node scripts/configurarSeguridad.js` desde `proyectos/Api` y
-reiniciar la API; no repetir la restauración ni la carga.
-
-El administrador ve Clientes, Proveedores, Inventario y Ventas; Corporativo ve
-Estadísticas. El token de sesión se mantiene solo en memoria del navegador y se pierde al
-recargar la página. Las rutas de la API verifican sesión y rol. El rol Administrador
-usa `api_administrador` en Corporativo y `api_sucursal` en su nodo; el rol Corporativo
-usa `api_corporativo` para reportes. El login web usa `api_login`.
+Si una sucursal no responde, sus operaciones reciben HTTP 503; la otra puede seguir trabajando. Si falla Corporativo, no se puede iniciar una sesión nueva, editar catálogos compartidos ni consultar estadísticas; las sesiones existentes pueden continuar con operaciones locales, y los detalles públicos omiten contactos privados. Los cambios de replicación deben verificarse tras restablecer el nodo; el guion de falla incluye una consulta de comandos pendientes. Esta solución no implementa un nodo alterno para Corporativo.
 
 ## Estructura del proyecto
 
-```
-Proyecto-1-Bases2/
-├── Script sql/                 scripts .sql en orden de ejecución
-├── proyectos/
-│   ├── Api/                    API en Node.js + Express
-│   │   └── src/
-│   │       ├── routes/         una ruta por módulo, cada una llama a sus stored procedures
-│   │       ├── dbNodos.js      conexiones a los tres nodos SQL Server
-│   │       ├── validar.js      validaciones de los parámetros
-│   │       └── index.js        inicio de la API
-│   └── WebSite/                sitio web en React + Vite
-│       └── src/
-│           ├── pages/          una página por módulo (y reportes/ para las estadísticas)
-│           ├── components/     ventanas de detalle, formularios, paginación, buscador
-│           ├── styles/         estilos separados por parte de la interfaz
-│           └── api.js          llamadas a la API
-├── codigo/                     carpeta de la plantilla del curso
-├── backups/                    aquí va el .bak (no se sube al repositorio)
-├── docker-compose.yml          contenedor de SQL Server
-├── .env.example                ejemplo del archivo con la contraseña de sa
-└── README.md
-```
+| Ruta | Contenido |
+| --- | --- |
+| [`Script sql/Proyecto2/`](Script%20sql/Proyecto2/) | Creación de nodos, fragmentación, productos, procedimientos, vistas, seguridad y replicación. |
+| [`proyectos/Api/`](proyectos/Api/) | API Express y scripts de instalación, carga y actualización. |
+| [`proyectos/WebSite/`](proyectos/WebSite/) | Interfaz React/Vite. |
+| [`docker-compose.yml`](docker-compose.yml) | Cuatro instancias SQL Server: origen y tres nodos distribuidos. |
+| [`.env.example`](.env.example) | Plantilla de configuración sin claves reales. |

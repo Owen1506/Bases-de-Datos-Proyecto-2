@@ -39,14 +39,6 @@ const PASOS = [
 
   // 2. Proyecto 1 (sql_wwi): restaurar WWI desde el .bak como origen de la carga inicial
   ['Proyecto 1', '00_restore_wwi.sql', 'master'],
-  ['Proyecto 1', '01_sinonimos.sql'],
-  ['Proyecto 1', '02_sp_catalogos.sql'],
-  ['Proyecto 1', '03_sp_clientes.sql'],
-  ['Proyecto 1', '04_sp_proveedores.sql'],
-  ['Proyecto 1', '05_sp_inventario.sql'],
-  ['Proyecto 1', '06_sp_ventas.sql'],
-  ['Proyecto 1', '07_sp_estadisticas.sql'],
-  ['Proyecto 1', '08_sp_reportes_6_10.sql'],
 
   // 3. Nodos: revisar que estén listos y crear las bases
   ['Corporativo', 'Proyecto2/00_verificar_nodo.sql', 'master'],
