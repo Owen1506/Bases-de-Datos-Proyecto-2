@@ -120,5 +120,3 @@ Si una sucursal no responde, sus operaciones reciben HTTP 503; la otra puede seg
 | [`proyectos/WebSite/`](proyectos/WebSite/) | Interfaz React/Vite. |
 | [`docker-compose.yml`](docker-compose.yml) | Cuatro instancias SQL Server: origen y tres nodos distribuidos. |
 | [`.env.example`](.env.example) | Plantilla de configuración sin claves reales. |
-
-El [README de fragmentación](Script%20sql/Proyecto2/Fragmentacion/README.md) explica la estructura de los datos y la carga inicial. Algunos comentarios de esa guía describen etapas previas del desarrollo; para el estado global de la entrega prevalece esta sección de resultados y el código actual.
